@@ -1,325 +1,325 @@
-<h1 align="center"> Project Management Tool </h1>
-<p align="center"> A real-time, highly collaborative work management system designed to coordinate workspace tasks, streamline team communications, and synchronize development progress. </p>
+# 📋 Project Management Tool
 
-<p align="center">
-  <img alt="Build" src="https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge">
-  <img alt="Issues" src="https://img.shields.io/badge/Issues-0%20Open-blue?style=for-the-badge">
-  <img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-orange?style=for-the-badge">
-  <img alt="License" src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge">
-</p>
-<!-- 
-  **Note:** These are static placeholder badges. Replace them with your project's actual badges.
-  You can generate your own at https://shields.io
--->
+A real-time, full-stack collaborative project management platform built on the **MERN stack**. It enables teams to organize work into projects, assign and track tasks, discuss progress in-context, and stay updated instantly through live notifications — all from a single, unified dashboard.
+
+![Build](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge)
+![Issues](https://img.shields.io/badge/Issues-0%20Open-blue?style=for-the-badge)
+![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+
+---
 
 ## 📌 Table of Contents
+
 - [Overview](#-overview)
 - [Key Features](#-key-features)
-- [Tech Stack & Architecture](#-tech-stack--architecture)
+- [Tech Stack](#️-tech-stack)
+- [Architecture](#-architecture)
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
 - [Usage](#-usage)
+- [Screenshots](#-screenshots)
+- [Roadmap](#-roadmap)
 - [Contributing](#-contributing)
 - [License](#-license)
+- [Author](#-author)
 
 ---
 
 ## ⭐ Overview
 
-Project Management Tool is a dynamic workspace platform built to empower teams with immediate visual tracking of complex processes, assigning operational tasks, and fostering synchronous communication.
+Modern teams often lose valuable time juggling scattered spreadsheets, outdated task boards, and disconnected chat threads just to figure out what's actually going on with a project. **Project Management Tool** solves this by giving teams one central, real-time workspace to plan, assign, discuss, and track work.
 
-> Modern development projects struggle with communication fragmentation, stale task boards, and unorganized notification loops. Teams lose hours cross-referencing spreadsheets and chat logs to find current project priorities, resulting in missed delivery targets and alignment bottlenecks.
-
-This system provides a unified solution to work planning and tracking. By grouping operations under discrete project boards, users can generate tasks, write immediate feedback comments, manage membership invitations, and view status changes instantaneously. Its lightweight footprint maintains active, real-time channels using dynamic web-sockets, so update lists stay current without tedious manual refreshes.
+Projects act as containers for related work. Inside each project, teams can create tasks, leave comments directly on those tasks, invite members securely, and watch status changes update live — no manual refreshing required, thanks to WebSocket-powered real-time sync.
 
 ---
 
 ## ✨ Key Features
 
-The workspace architecture translates technical performance into clear, user-focused benefits:
-
-*   🚀 **Centralized Board Dashboard**: Visualize team progress across multiple initiatives from a high-level command view. Get real-time summaries of task volumes and ongoing operations.
-*   👥 **Collaborative Task Ownership**: Create, assign, and customize granular task cards. Utilize the comprehensive `TaskDetailsModal` to inspect milestones, update workflows, and adjust dates in real time.
-*   💬 **In-Context Discussion Threads**: Stop context-switching to external communication tools. Post comments directly inside task records to coordinate solutions exactly where work happens.
-*   🔔 **Dynamic Notification Engine**: Keep team members completely aligned. An intelligent notification system alerts users to new assignments, workspace mentions, and project status modifications via the dedicated `NotificationContext` provider.
-*   🔒 **Secure Project Gateways**: Coordinate secure collaborations. Manage project access through invitation-only credentials handled by dedicated backend controller logics.
-*   🌓 **Personalized Workspace Theme**: Adjust your development environment to comfortable viewing standards with rapid light/dark mode context toggling.
-*   🛡️ **Role-Guided Navigation**: Protect sensitive system actions. Guard configuration panels and user access privileges using robust tokenized middleware routes.
+- 🗂️ **Project Workspaces** — Organize work into distinct project boards, each with its own tasks, members, and activity history.
+- ✅ **Task Management** — Create, assign, update, and track tasks through a detailed task modal supporting status changes, due dates, and ownership.
+- 💬 **In-Task Comments** — Discuss work directly inside the relevant task instead of switching to external chat apps.
+- 🔔 **Real-Time Notifications** — Get instantly notified of new task assignments, comments, and project updates via a live notification system.
+- 👥 **Secure Invitations** — Invite teammates to a project through a controlled, invitation-based access flow.
+- 🔐 **JWT Authentication** — Secure login and registration with token-based authentication and protected routes.
+- 🌓 **Light/Dark Theme** — Switch between light and dark mode for a comfortable viewing experience.
+- 📜 **Activity Logging** — Track project and task history through an activity log for full transparency.
+- 📱 **Responsive Dashboard** — Clean, component-based UI built with React and Vite for a fast, responsive experience across devices.
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 🛠️ Tech Stack
 
-The application implements a decoupled client-server pattern. The Express API delivers resources safely through RESTful interfaces, while the React-Vite client creates highly responsive user layouts.
+### Frontend (`/client`)
+| Technology | Purpose |
+|---|---|
+| **React** | Component-based UI library for building the dashboard interface |
+| **Vite** | Fast development server and build tool |
+| **React Router DOM** | Client-side routing and protected route handling |
+| **Axios** | HTTP client for communicating with the backend REST API |
+| **Socket.io Client** | Real-time, bi-directional communication with the server |
+| **Lucide React** | Lightweight, modern icon set |
+| **Oxlint** | High-performance linter for code quality |
 
-### Verified Technology Stack
+### Backend (`/server`)
+| Technology | Purpose |
+|---|---|
+| **Node.js / Express** | REST API server and routing |
+| **MongoDB / Mongoose** | Database and schema modeling for users, projects, tasks, comments, notifications, and invitations |
+| **JWT (jsonwebtoken)** | Authentication and route protection |
+| **Socket.io** | Real-time event broadcasting to connected clients |
+| **Multer (or equivalent)** | File/asset upload handling |
 
-| Technology | Purpose | Why it was Chosen |
-| :--- | :--- | :--- |
-| **React** | Frontend Component Engine | Built on a component-based model to manage high-frequency page renders and rapid state synchronizations smoothly. |
-| **Express** | Backend API Framework | Provides lightweight, performant routing systems to manage server endpoints, invitations, and assets efficiently. |
-| **React Router DOM** | Client Routing Routing | Coordinates declarative client routes, enforcing strict page transitions and authenticated layout guards. |
-| **Axios** | HTTP Communications | Facilitates asynchronous communication with backend routes, providing clean interceptors for security headers. |
-| **Socket.io Client** | Real-time Communication | Powers continuous server connection loops to update user dashboards instantly when project modifications occur. |
-| **Lucide React** | Visual Asset Interface | Equips the layout with modern, accessible, and lightweight vector icons. |
-| **Vite** | Frontend Development Bundler | Provides blazing-fast hot-reloads and lightning-quick compilation to maintain developer productivity. |
-| **Oxlint** | High-performance Code Linter | Keeps files compliant with clean code standards, mitigating programming errors before build compilations. |
+---
 
-### Architectural Concept
+## 🏗️ Architecture
+
+The application follows a decoupled client-server architecture, with the Express API serving data over REST and Socket.io handling live updates.
+
 ```
-   ┌────────────────────────────────────────────────────────┐
-   │                     React Client                       │
-   │   (Context Managers, Page Components, Socket.io)       │
-   └───────────┬───────────────────────────────▲────────────┘
-               │                               │
-       RESTful │ Requests (Axios)              │ Real-time Events
-               │                               │ (WebSockets)
-   ┌───────────▼───────────────────────────────┴────────────┐
-   │                     Express API                        │
-   │     (Routes, Controllers, Custom Middlewares)          │
-   └───────────────────────────┬────────────────────────────┘
-                               │ Database Connections
-   ┌───────────────────────────▼────────────────────────────┐
-   │                    Database Client                     │
-   │               (Models, db Config Helpers)              │
-   └────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│                     React Client                        │
+│   (Context Providers, Pages, Components, Socket.io)      │
+└───────────┬───────────────────────────────▲─────────────┘
+            │                               │
+    RESTful │ Requests (Axios)              │ Real-time Events
+            │                               │ (Socket.io)
+┌───────────▼───────────────────────────────┴─────────────┐
+│                     Express API                          │
+│      (Routes → Controllers → Middleware)                 │
+└───────────────────────────┬──────────────────────────────┘
+                             │ Mongoose ODM
+┌────────────────────────────▼─────────────────────────────┐
+│                      MongoDB Database                     │
+│         (Users, Projects, Tasks, Comments, etc.)           │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 📁 Project Structure
 
-The project maintains a clean separation of concerns, separating client views from backend model operations.
-
 ```
-📁 msohaib422-CodeAlpha_Project_Management_Tool-1ee093e/
-├── 📁 server/                              # Backend server source directories
-│   ├── 📁 config/                          # Connection configuration files
-│   │   └── 📄 db.js                        # System database config helper
-│   ├── 📁 controllers/                     # Application API controllers
-│   │   ├── 📄 authController.js            # User sign-in and authorization controller
-│   │   ├── 📄 commentController.js         # Comment posting and deletion actions
-│   │   ├── 📄 invitationController.js      # Project invite creation and verification controller
-│   │   ├── 📄 notificationController.js    # Notification tracking controller
-│   │   ├── 📄 projectController.js         # Main workspace project coordination controller
-│   │   ├── 📄 taskController.js            # Work item task creation and alteration controller
-│   │   └── 📄 userController.js            # User profile management controller
-│   ├── 📁 middleware/                      # Endpoint protection utilities
-│   │   ├── 📄 authMiddleware.js            # User authentication route validator
-│   │   └── 📄 errorMiddleware.js           # API wide unified error response formatter
-│   ├── 📁 models/                          # Database logical structure schemas
-│   │   ├── 📄 ActivityLog.js               # Activity history logger schema
-│   │   ├── 📄 Comment.js                   # Interactive task feedback schema
-│   │   ├── 📄 Notification.js              # Active workspace notifications schema
-│   │   ├── 📄 Project.js                   # Project entity schema
-│   │   ├── 📄 ProjectInvitation.js         # Workspace joining authorization schema
-│   │   ├── 📄 Task.js                      # Task card functional fields schema
-│   │   └── 📄 User.js                      # Registered user profile schema
-│   ├── 📁 routes/                          # API routing gateways
-│   │   ├── 📄 authRoutes.js                # Core authentication routing
-│   │   ├── 📄 commentRoutes.js             # User comments interface mapping
-│   │   ├── 📄 invitationRoutes.js          # Shared board invitations routing
-│   │   ├── 📄 notificationRoutes.js        # User alert dashboard actions routing
-│   │   ├── 📄 projectRoutes.js             # Target project workspace control routing
-│   │   ├── 📄 taskRoutes.js                # Task creation and tracking routing
-│   │   └── 📄 userRoutes.js                # User profiles management routing
-│   ├── 📁 utils/                           # Core utilities
-│   │   ├── 📄 generateToken.js             # Authorization JWT generator helper
-│   │   └── 📄 upload.js                    # File upload asset processor utility
-│   ├── 📄 .env                             # Environment configuration parameters
-│   ├── 📄 package-lock.json                # Server library dependency lockfile
-│   ├── 📄 package.json                     # Server runtime settings file
-│   ├── 📄 seed.js                          # Sandbox database seeder tool
-│   └── 📄 server.js                        # Master API entry points runtime
-└── 📁 client/                              # Frontend client directories
-    ├── 📁 public/                          # Uncompiled static assets
-    │   ├── 📄 favicon.svg                  # Browser address tab graphic icon
-    │   └── 📄 icons.svg                    # Vector visual layout icons
-    ├── 📁 src/                             # Component design systems
-    │   ├── 📁 assets/                      # Application media references
-    │   │   ├── 📄 hero.png                 # Login dashboard hero visual graphic
-    │   │   ├── 📄 react.svg                # Frontend library graphical asset
-    │   │   └── 📄 vite.svg                 # Build platform visual logo
-    │   ├── 📁 components/                  # Common interface elements
-    │   │   ├── 📄 layout.css               # Shared layout alignment definitions
-    │   │   ├── 📄 Modal.jsx                # Universal display overlay template
-    │   │   ├── 📄 Navbar.jsx               # Navigation structure element
-    │   │   ├── 📄 ProtectedRoute.jsx       # Auth route access validator component
-    │   │   ├── 📄 Sidebar.jsx              # Navigation dashboard side panel
-    │   │   ├── 📄 TaskDetailsModal.jsx     # Detail editor modal interface
-    │   │   └── 📄 ToastContainer.jsx       # Flash messaging popup system
-    │   ├── 📁 context/                     # Global data managers
-    │   │   ├── 📄 AuthContext.jsx          # Security state interface
-    │   │   ├── 📄 NotificationContext.jsx  # Notification stream context
-    │   │   └── 📄 ThemeContext.jsx         # Global light-dark configuration
-    │   ├── 📁 pages/                       # Complete dashboard layouts
-    │   │   ├── 📄 board.css                # Interactive work boards style layout
-    │   │   ├── 📄 Dashboard.jsx            # Core analytic system view
-    │   │   ├── 📄 Login.jsx                # User dashboard login gate
-    │   │   ├── 📄 NotFound.jsx             # 404 deadlink fallback template
-    │   │   ├── 📄 Notifications.jsx        # Historical alerts stream drawer
-    │   │   ├── 📄 ProjectDetails.jsx       # Specific project workspace board
-    │   │   ├── 📄 Projects.jsx             # Combined dynamic projects deck
-    │   │   ├── 📄 Profile.jsx              # Core user options adjustments
-    │   │   ├── 📄 Register.jsx             # User signup registration layout
-    │   │   ├── 📄 Settings.jsx             # System customization modules
-    │   │   └── 📄 UserManagement.jsx       # Administrative control view
-    │   ├── 📁 services/                    # Server connection adapters
-    │   │   ├── 📄 api.js                   # Unified Axios API interface instances
-    │   │   └── 📄 socket.js                # Core WebSocket interface integration
-    │   ├── 📄 App.css                      # Global aesthetic visual system
-    │   ├── 📄 index.css                    # Tailwind baseline style controls
-    │   ├── 📄 App.jsx                      # System routing and page wrapper
-    │   └── 📄 main.jsx                     # Execution entry point react file
-    ├── 📄 .gitignore                       # Client git management block list
-    ├── 📄 .oxlintrc.json                   # Client code checking config file
-    ├── 📄 README.md                        # Readme guidance handbook
-    ├── 📄 package-lock.json                # Front dependencies lockfile
-    ├── 📄 package.json                     # Frontend scripts and requirements
-    └── 📄 vite.config.js                   # Vite performance configuration
+CodeAlpha_Project_Management_Tool/
+├── server/                          # Backend (Express + MongoDB)
+│   ├── config/
+│   │   └── db.js                    # Database connection setup
+│   ├── controllers/
+│   │   ├── authController.js        # Login / registration logic
+│   │   ├── commentController.js     # Comment create / delete logic
+│   │   ├── invitationController.js  # Project invite handling
+│   │   ├── notificationController.js
+│   │   ├── projectController.js     # Project CRUD logic
+│   │   ├── taskController.js        # Task CRUD logic
+│   │   └── userController.js        # User profile logic
+│   ├── middleware/
+│   │   ├── authMiddleware.js        # JWT route protection
+│   │   └── errorMiddleware.js       # Centralized error handling
+│   ├── models/
+│   │   ├── ActivityLog.js
+│   │   ├── Comment.js
+│   │   ├── Notification.js
+│   │   ├── Project.js
+│   │   ├── ProjectInvitation.js
+│   │   ├── Task.js
+│   │   └── User.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── commentRoutes.js
+│   │   ├── invitationRoutes.js
+│   │   ├── notificationRoutes.js
+│   │   ├── projectRoutes.js
+│   │   ├── taskRoutes.js
+│   │   └── userRoutes.js
+│   ├── utils/
+│   │   ├── generateToken.js         # JWT token generator
+│   │   └── upload.js                # File upload utility
+│   ├── seed.js                      # Database seeder script
+│   └── server.js                    # App entry point
+│
+└── client/                          # Frontend (React + Vite)
+    ├── public/
+    ├── src/
+    │   ├── assets/
+    │   ├── components/
+    │   │   ├── Modal.jsx
+    │   │   ├── Navbar.jsx
+    │   │   ├── ProtectedRoute.jsx
+    │   │   ├── Sidebar.jsx
+    │   │   ├── TaskDetailsModal.jsx
+    │   │   └── ToastContainer.jsx
+    │   ├── context/
+    │   │   ├── AuthContext.jsx
+    │   │   ├── NotificationContext.jsx
+    │   │   └── ThemeContext.jsx
+    │   ├── pages/
+    │   │   ├── Dashboard.jsx
+    │   │   ├── Login.jsx
+    │   │   ├── Register.jsx
+    │   │   ├── Projects.jsx
+    │   │   ├── ProjectDetails.jsx
+    │   │   ├── Notifications.jsx
+    │   │   ├── Profile.jsx
+    │   │   ├── Settings.jsx
+    │   │   ├── UserManagement.jsx
+    │   │   └── NotFound.jsx
+    │   ├── services/
+    │   │   ├── api.js               # Axios instance
+    │   │   └── socket.js            # Socket.io client instance
+    │   ├── App.jsx
+    │   └── main.jsx
+    └── vite.config.js
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-Ensure your development workspace has Node.js installed to execute the server configurations and client dependencies.
+### Prerequisites
 
-### 1. Repository Setup
+- **Node.js** (v16 or higher recommended)
+- **MongoDB** (local instance or MongoDB Atlas connection string)
+- **npm** (comes with Node.js)
+
+### 1. Clone the Repository
+
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd msohaib422-CodeAlpha_Project_Management_Tool-1ee093e
+git clone https://github.com/msohaib422/CodeAlpha_Project_Management_Tool.git
+cd CodeAlpha_Project_Management_Tool
 ```
 
-### 2. Configure Backend Server
-Navigate to the server directory, install library dependencies, and populate the project schema models if required:
+### 2. Set Up the Backend
+
 ```bash
 cd server
 
-# Install the required Node.js libraries
+# Install dependencies
 npm install
 
-# (Optional) Seed the database with mock test data
+# Create a .env file (see Environment Variables section below)
+
+# (Optional) Seed the database with sample data
 node seed.js
 
-# Launch the Express backend system
+# Start the backend server
 npm start
 ```
 
-### 3. Configure Frontend Client
-Launch a separate terminal terminal path, head to the frontend client directories, and boot up the development build environment:
+By default, the API will run on `http://localhost:5000` (or the port defined in your `.env` file).
+
+### 3. Set Up the Frontend
+
+Open a new terminal window:
+
 ```bash
 cd client
 
-# Install frontend UI dependencies
+# Install dependencies
 npm install
 
-# Launch local hot-reload server
+# Start the development server
 npm run dev
 ```
-Navigate to your local browser workspace using the network port configuration provided by Vite (typically `http://localhost:5173`).
+
+The client will be available at `http://localhost:5173`.
+
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file inside the `server/` directory with the following variables:
+
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+CLIENT_URL=http://localhost:5173
+```
+
+> ⚠️ Never commit your `.env` file. Make sure it is listed in `.gitignore`.
 
 ---
 
 ## 🔧 Usage
 
-Once both client and server setups are active, use the app to coordinate and manage workspace projects.
+1. **Register / Login** — Create an account at `/register` or sign in at `/login`.
+2. **Dashboard** — View a summary of your active projects and recent notifications.
+3. **Create a Project** — Set up a new project workspace from the `/projects` page.
+4. **Manage Tasks** — Open a project to create, assign, and update tasks via the `TaskDetailsModal`.
+5. **Collaborate** — Invite teammates to your project and discuss tasks using in-context comments.
+6. **Stay Updated** — Receive real-time notifications for assignments, comments, and status changes.
 
-### Standard User Flow
+---
 
-1. **Authentication**: Access the authentication interface at `/register` to create a profile, or secure validation credentials at `/login`.
-2. **Dashboard Overview**: Check project progress, view real-time alerts, and navigate using the responsive `Sidebar`.
-3. **Workspace Control**: Go to `/projects` to inspect operational boards or set up new tasks.
-4. **Task Modification**: Click any workspace task card to open the `TaskDetailsModal` window. Update task stages, assign roles, and add comments.
+## 📸 Screenshots
 
-### Integrated Application API Endpoints
+> Add screenshots or a demo GIF of the dashboard, task board, and notification panel here to give visitors a quick visual preview of the app.
 
-The API acts as a communication bridge between server controllers and frontend services. The base application utilizes optimized routes, such as:
+```
+docs/screenshots/dashboard.png
+docs/screenshots/task-board.png
+docs/screenshots/notifications.png
+```
 
-*   `GET /` - Confirms backend connection state and system availability.
-*   `GET io` - Configures continuous web socket message loops to process real-time events.
+---
+
+## 🗺️ Roadmap
+
+- [ ] File attachments on tasks
+- [ ] Kanban-style drag-and-drop board view
+- [ ] Task due-date reminders via email
+- [ ] Analytics dashboard for project progress
+- [ ] Mobile-responsive UI improvements
+- [ ] Unit and integration test coverage
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions to improve Project Management Tool! Your input helps make this project better for everyone.
+Contributions are welcome! To contribute:
 
-### How to Contribute
-
-1. **Fork the repository** - Click the 'Fork' button at the top right of this page
-2. **Create a feature branch** 
+1. **Fork** the repository
+2. **Create a feature branch**
    ```bash
-   git checkout -b feature/amazing-feature
+   git checkout -b feature/your-feature-name
    ```
-3. **Make your changes** - Improve code, documentation, or features
-4. **Test thoroughly** - Ensure all functionality works as expected
+3. **Make your changes** and test them locally
+4. **Lint your code**
    ```bash
-   # Run project checking rules
    npm run lint
    ```
-5. **Commit your changes** - Write clear, descriptive commit messages
+5. **Commit your changes**
    ```bash
-   git commit -m 'Add: Amazing new feature that does X'
+   git commit -m "Add: your feature description"
    ```
 6. **Push to your branch**
    ```bash
-   git push origin feature/amazing-feature
+   git push origin feature/your-feature-name
    ```
-7. **Open a Pull Request** - Submit your changes for review
+7. **Open a Pull Request** describing your changes
 
-### Development Guidelines
-
-- ✅ Follow the existing code style and conventions
-- 📝 Add comments for complex logic and algorithms
-- 🧪 Write tests for new features and bug fixes
-- 📚 Update documentation for any changed functionality
-- 🔄 Ensure backward compatibility when possible
-- 🎯 Keep commits focused and atomic
-
-### Ideas for Contributions
-
-We're looking for help with:
-
-- 🐛 **Bug Fixes:** Report and fix bugs
-- ✨ **New Features:** Implement requested features from issues
-- 📖 **Documentation:** Improve README, add tutorials, create examples
-- 🎨 **UI/UX:** Enhance user interface and experience
-- ⚡ **Performance:** Optimize code and improve efficiency
-- 🌐 **Internationalization:** Add multi-language support
-- 🧪 **Testing:** Increase test coverage
-- ♿ **Accessibility:** Make the project more accessible
-
-### Code Review Process
-
-- All submissions require review before merging
-- Maintainers will provide constructive feedback
-- Changes may be requested before approval
-- Once approved, your PR will be merged and you'll be credited
-
-### Questions?
-
-Feel free to open an issue for any questions or concerns. We're here to help!
+### Guidelines
+- Follow the existing code style and naming conventions
+- Keep commits focused and descriptive
+- Update documentation when functionality changes
+- Test your changes before submitting a PR
 
 ---
 
 ## 📝 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for complete details.
-
-### What this means:
-
-- ✅ **Commercial use:** You can use this project commercially
-- ✅ **Modification:** You can modify the code
-- ✅ **Distribution:** You can distribute this software
-- ✅ **Private use:** You can use this project privately
-- ⚠️ **Liability:** The software is provided "as is", without warranty
-- ⚠️ **Trademark:** This license does not grant trademark rights
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-<p align="center">Made with ❤️ by the Project Management Tool Team</p>
-<p align="center">
-  <a href="#">⬆️ Back to Top</a>
-</p>
+## 👤 Author
+
+**Muhammad Sohaib**
+MERN Stack Developer | CodeAlpha Internship Project
+
+- GitHub: [@msohaib422](https://github.com/msohaib422)
+
+---
+
+<p align="center">⭐ If you found this project useful, consider giving it a star!</p>
