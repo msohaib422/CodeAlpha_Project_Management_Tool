@@ -1,11 +1,10 @@
-# 📋 Project Management Tool
+# 📋 CollabPM - Project Management Tool
 
 A real-time, full-stack collaborative project management platform built on the **MERN stack**. It enables teams to organize work into projects, assign and track tasks, discuss progress in-context, and stay updated instantly through live notifications — all from a single, unified dashboard.
 
 ![Build](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge)
-![Issues](https://img.shields.io/badge/Issues-0%20Open-blue?style=for-the-badge)
 ![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+![Internship Project](https://img.shields.io/badge/Internship-Project-yellow?style=for-the-badge)
 
 ---
 
@@ -19,10 +18,8 @@ A real-time, full-stack collaborative project management platform built on the *
 - [Getting Started](#-getting-started)
 - [Environment Variables](#-environment-variables)
 - [Usage](#-usage)
-- [Screenshots](#-screenshots)
 - [Roadmap](#-roadmap)
 - [Contributing](#-contributing)
-- [License](#-license)
 - [Author](#-author)
 
 ---
@@ -252,29 +249,6 @@ CLIENT_URL=http://localhost:5173
 
 ---
 
-## 📸 Screenshots
-
-> Add screenshots or a demo GIF of the dashboard, task board, and notification panel here to give visitors a quick visual preview of the app.
-
-```
-docs/screenshots/dashboard.png
-docs/screenshots/task-board.png
-docs/screenshots/notifications.png
-```
-
----
-
-## 🗺️ Roadmap
-
-- [ ] File attachments on tasks
-- [ ] Kanban-style drag-and-drop board view
-- [ ] Task due-date reminders via email
-- [ ] Analytics dashboard for project progress
-- [ ] Mobile-responsive UI improvements
-- [ ] Unit and integration test coverage
-
----
-
 ## 🤝 Contributing
 
 Contributions are welcome! To contribute:
@@ -307,12 +281,6 @@ Contributions are welcome! To contribute:
 
 ---
 
-## 📝 License
-
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
-
----
-
 ## 👤 Author
 
 **Muhammad Sohaib**
@@ -321,5 +289,3 @@ MERN Stack Developer | CodeAlpha Internship Project
 - GitHub: [@msohaib422](https://github.com/msohaib422)
 
 ---
-
-<p align="center">⭐ If you found this project useful, consider giving it a star!</p>
