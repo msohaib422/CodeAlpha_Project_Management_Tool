@@ -18,7 +18,6 @@ A real-time, full-stack collaborative project management platform built on the *
 - [Getting Started](#-getting-started)
 - [Environment Variables](#-environment-variables)
 - [Usage](#-usage)
-- [Roadmap](#-roadmap)
 - [Contributing](#-contributing)
 - [Author](#-author)
 
