@@ -33,7 +33,24 @@ const updateUserProfile = async (req, res) => {
       user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
 
       if (req.file) {
-        user.profilePicture = `/uploads/${req.file.filename}`;
+        const path = require('path');
+        const ext = path.extname(req.file.originalname).toLowerCase() || '.png';
+        const filename = `${req.user._id}-${Date.now()}${ext}`;
+
+        if (process.env.BLOB_READ_WRITE_TOKEN) {
+          const { put } = require('@vercel/blob');
+          const blob = await put(`profile-pictures/${filename}`, req.file.buffer, {
+            access: 'public',
+            token: process.env.BLOB_READ_WRITE_TOKEN,
+          });
+          user.profilePicture = blob.url;
+        } else {
+          const fs = require('fs');
+          const uploadDir = path.join(__dirname, '..', 'uploads');
+          if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+          fs.writeFileSync(path.join(uploadDir, filename), req.file.buffer);
+          user.profilePicture = `/uploads/${filename}`;
+        }
       } else if (req.body.profilePicture !== undefined) {
         user.profilePicture = req.body.profilePicture;
       }

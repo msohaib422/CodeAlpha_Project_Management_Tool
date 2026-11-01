@@ -1,6 +1,5 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from './AuthContext';
-import { initiateSocketConnection, disconnectSocket, getSocket } from '../services/socket';
 import API from '../services/api';
 
 export const NotificationContext = createContext();
@@ -14,6 +13,8 @@ export const NotificationProvider = ({ children }) => {
   const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  const seenIdsRef = useRef(new Set());
+
   // Load notifications paginated
   const fetchNotifications = async (pageNum = 1, append = false) => {
     if (!user) return;
@@ -22,7 +23,6 @@ export const NotificationProvider = ({ children }) => {
       const { data } = await API.get(`/notifications?page=${pageNum}&limit=10`);
       if (append) {
         setNotifications((prev) => {
-          // Avoid duplicates
           const existingIds = new Set(prev.map((n) => n._id));
           const filtered = data.notifications.filter((n) => !existingIds.has(n._id));
           return [...prev, ...filtered];
@@ -33,6 +33,8 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(data.unreadCount);
       setPage(data.page);
       setPages(data.pages);
+      // Track seen ids so polling can detect genuinely new notifications.
+      data.notifications.forEach((n) => seenIdsRef.current.add(n._id));
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -44,7 +46,7 @@ export const NotificationProvider = ({ children }) => {
   const addToast = (message, type = 'info') => {
     const id = Date.now() + Math.random().toString(36).substr(2, 9);
     setToasts((prev) => [...prev, { id, message, type }]);
-    
+
     // Auto-remove toast after 4 seconds
     setTimeout(() => {
       removeToast(id);
@@ -77,39 +79,53 @@ export const NotificationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (user) {
-      // 1. Fetch first page of notifications
-      fetchNotifications(1, false);
-
-      // 2. Establish Socket Connection
-      const socket = initiateSocketConnection(user._id);
-
-      // 3. Listen for live notifications
-      socket.on('new_notification', (newNotif) => {
-        setNotifications((prev) => {
-          if (prev.some((n) => n._id === newNotif._id)) return prev;
-          return [newNotif, ...prev];
-        });
-        // Eagerly increment so badge updates instantly, before unread_count_update arrives
-        setUnreadCount((prev) => prev + 1);
-        addToast(newNotif.message, 'info');
-      });
-
-      socket.on('unread_count_update', (data) => {
-        if (data && typeof data.count === 'number') {
-          setUnreadCount(data.count);
-        }
-      });
-
-      return () => {
-        disconnectSocket();
-      };
-    } else {
+    if (!user) {
       setNotifications([]);
       setUnreadCount(0);
-      disconnectSocket();
+      seenIdsRef.current = new Set();
+      return;
     }
-  }, [user]);
+
+    // Initial load
+    fetchNotifications(1, false);
+
+    // Poll for new notifications / unread count updates
+    const poll = async () => {
+      try {
+        const { data } = await API.get('/notifications?page=1&limit=10');
+        let hasNew = false;
+        data.notifications.forEach((n) => {
+          if (!seenIdsRef.current.has(n._id)) {
+            seenIdsRef.current.add(n._id);
+            hasNew = true;
+            addToast(n.message, 'info');
+          }
+        });
+        setUnreadCount(data.unreadCount);
+        // Merge: prepend genuinely new notifications, update existing ones in place
+        setNotifications((prev) => {
+          const byId = new Map(prev.map((n) => [n._id, n]));
+          const newOnes = [];
+          data.notifications.forEach((n) => {
+            if (!byId.has(n._id)) {
+              newOnes.push(n);
+            } else {
+              byId.set(n._id, n);
+            }
+          });
+          const updatedExisting = prev.map((p) => byId.get(p._id) || p);
+          return [...newOnes, ...updatedExisting.filter((p) => !newOnes.some((n) => n._id === p._id))];
+        });
+        setPage(data.page);
+        setPages(data.pages);
+      } catch (error) {
+        console.error('Error polling notifications:', error);
+      }
+    };
+
+    const intervalId = setInterval(poll, 10000);
+    return () => clearInterval(intervalId);
+  }, [user?._id]);
 
   return (
     <NotificationContext.Provider

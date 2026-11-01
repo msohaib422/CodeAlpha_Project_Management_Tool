@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { UserPlus, Trash2, Shield, Phone, Building2, BadgeCheck, Search, X } from 'lucide-react';
-import API from '../services/api';
+import API, { SERVER_ORIGIN } from '../services/api';
 import Modal from '../components/Modal';
 import { NotificationContext } from '../context/NotificationContext';
 import { AuthContext } from '../context/AuthContext';
@@ -183,7 +183,7 @@ const UserManagement = () => {
                         <div style={{
                           width: '38px', height: '38px', borderRadius: '50%',
                           background: u.profilePicture ? 'transparent' : 'var(--primary)',
-                          backgroundImage: u.profilePicture ? `url(${u.profilePicture.startsWith('/uploads') ? 'http://localhost:5000' + u.profilePicture : u.profilePicture})` : 'none',
+                          backgroundImage: u.profilePicture ? `url(${u.profilePicture.startsWith('/uploads') ? SERVER_ORIGIN + u.profilePicture : u.profilePicture})` : 'none',
                           backgroundSize: 'cover', backgroundPosition: 'center',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '0.85rem', fontWeight: 700, color: '#fff', flexShrink: 0,

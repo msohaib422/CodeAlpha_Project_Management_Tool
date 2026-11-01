@@ -30,13 +30,7 @@ const sendNotification = async (req, { recipientId, senderId, type, projectId, t
       .populate('project', 'name')
       .populate('task', 'title');
 
-    const io = req.app.get('io');
-    if (io) {
-      io.to(recipientId.toString()).emit('new_notification', populatedNotification);
-      
-      const unreadCount = await Notification.countDocuments({ recipient: recipientId, read: false });
-      io.to(recipientId.toString()).emit('unread_count_update', { count: unreadCount });
-    }
+    // Real-time socket delivery removed; clients poll REST endpoints for updates.
   } catch (error) {
     console.error('Notification creation error:', error.message);
   }

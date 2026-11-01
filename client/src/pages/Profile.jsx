@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { NotificationContext } from '../context/NotificationContext';
+import { SERVER_ORIGIN } from '../services/api';
 import { Mail, Award } from 'lucide-react';
 
 const Profile = () => {
@@ -65,7 +66,7 @@ const Profile = () => {
   };
 
   const avatarSrc = previewUrl || (user?.profilePicture
-    ? (user.profilePicture.startsWith('/uploads') ? `http://localhost:5000${user.profilePicture}` : user.profilePicture)
+    ? (user.profilePicture.startsWith('/uploads') ? `${SERVER_ORIGIN}${user.profilePicture}` : user.profilePicture)
     : null);
 
   return (

@@ -19,13 +19,7 @@ const sendNotification = async (req, { recipientId, senderId, type, projectId, m
       .populate('sender', 'name username profilePicture')
       .populate('project', 'name');
 
-    const io = req.app.get('io');
-    if (io) {
-      io.to(recipientId.toString()).emit('new_notification', populated);
-
-      const unreadCount = await Notification.countDocuments({ recipient: recipientId, read: false });
-      io.to(recipientId.toString()).emit('unread_count_update', { count: unreadCount });
-    }
+    // Real-time socket delivery removed; clients poll REST endpoints for updates.
 
     return notification;
   } catch (err) {
@@ -238,11 +232,7 @@ const respondToInvitation = async (req, res) => {
         { $set: { read: true } }
       );
 
-      const io = req.app.get('io');
-      if (io) {
-        const unreadCount = await Notification.countDocuments({ recipient: req.user._id, read: false });
-        io.to(req.user._id.toString()).emit('unread_count_update', { count: unreadCount });
-      }
+      // Real-time socket delivery removed; clients poll REST endpoints for updates.
     } catch (notifErr) {
       console.error('Error marking invitation notification as read:', notifErr.message);
     }

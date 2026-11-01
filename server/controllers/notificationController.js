@@ -63,11 +63,7 @@ const markAsRead = async (req, res) => {
       );
     }
 
-    const io = req.app.get('io');
-    if (io) {
-      const unreadCount = await Notification.countDocuments({ recipient: req.user._id, read: false });
-      io.to(req.user._id.toString()).emit('unread_count_update', { count: unreadCount });
-    }
+    // Real-time socket delivery removed; clients poll REST endpoints for updates.
 
     res.json({ message: 'Notifications marked as read' });
   } catch (error) {

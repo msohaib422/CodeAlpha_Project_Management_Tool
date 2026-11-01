@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { NotificationContext } from '../context/NotificationContext';
+import { AuthContext } from '../context/AuthContext';
 import { Bell, CheckCircle, Clock, Mail, Check, X } from 'lucide-react';
 import API from '../services/api';
-import { getSocket } from '../services/socket';
 
 const Notifications = () => {
+  const { user } = useContext(AuthContext);
   const {
     notifications,
     unreadCount,
@@ -24,18 +25,11 @@ const Notifications = () => {
     fetchNotifications(1, false);
     fetchInvitations();
 
-    const socket = getSocket();
-    if (socket) {
-      const handleNewNotification = (newNotif) => {
-        if (newNotif.type === 'project_invitation') {
-          fetchInvitations();
-        }
-      };
-      socket.on('new_notification', handleNewNotification);
-      return () => {
-        socket.off('new_notification', handleNewNotification);
-      };
-    }
+    // Poll invitations periodically so new ones appear without a page refresh
+    const intervalId = setInterval(() => {
+      fetchInvitations();
+    }, 10000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const fetchInvitations = async () => {

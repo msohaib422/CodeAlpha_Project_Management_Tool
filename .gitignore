@@ -1,3 +1,13 @@
 .env
 .env.example
 .env.*
+
+# Dependencies
+node_modules/
+
+# Build output
+client/dist/
+
+# Uploaded files
+server/uploads/
+uploads/

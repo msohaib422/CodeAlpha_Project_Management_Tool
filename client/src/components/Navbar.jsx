@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { NotificationContext } from '../context/NotificationContext';
+import { SERVER_ORIGIN } from '../services/api';
 import { Search, Bell, Sun, Moon, LogOut, User as UserIcon, Menu } from 'lucide-react';
 import './layout.css';
 
@@ -66,7 +67,7 @@ const Navbar = ({ onMenuClick }) => {
           <Link to="/profile" style={{ textDecoration: 'none' }} title="Profile Settings">
             {user?.profilePicture ? (
               <img
-                src={user.profilePicture.startsWith('/uploads/') ? `http://localhost:5000${user.profilePicture}` : user.profilePicture}
+                src={user.profilePicture.startsWith('/uploads/') ? `${SERVER_ORIGIN}${user.profilePicture}` : user.profilePicture}
                 alt={user.name}
                 className="avatar"
                 onError={(e) => {

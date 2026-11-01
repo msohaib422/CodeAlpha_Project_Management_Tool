@@ -102,20 +102,7 @@ const createTask = async (req, res) => {
       .populate('assignedTo', 'name username email profilePicture role')
       .populate('createdBy', 'name username email profilePicture');
 
-    // Emit real-time task_created event so the assignee's and PM's dashboard refreshes
-    const io = req.app.get('io');
-    if (io) {
-      const recipients = new Set();
-      if (populatedTask.assignedTo) recipients.add(populatedTask.assignedTo._id.toString());
-      if (populatedTask.createdBy) recipients.add(populatedTask.createdBy._id.toString());
-      if (project.owner) recipients.add(project.owner.toString());
-      if (project.members) {
-        project.members.forEach(m => {
-          if (m.projectRole === 'Project Manager') recipients.add(m.user.toString());
-        });
-      }
-      recipients.forEach((uid) => io.to(uid).emit('task_created', populatedTask));
-    }
+    // Real-time socket delivery removed; clients poll REST endpoints for updates.
 
     res.status(201).json(populatedTask);
   } catch (error) {
@@ -298,20 +285,7 @@ const updateTask = async (req, res) => {
       .populate('assignedTo', 'name username email profilePicture role')
       .populate('createdBy', 'name username email profilePicture');
 
-    // Emit real-time task_updated event so dashboards refresh immediately
-    const io = req.app.get('io');
-    if (io) {
-      const recipients = new Set();
-      if (populatedTask.assignedTo) recipients.add(populatedTask.assignedTo._id.toString());
-      if (populatedTask.createdBy) recipients.add(populatedTask.createdBy._id.toString());
-      if (project.owner) recipients.add(project.owner.toString());
-      if (project.members) {
-        project.members.forEach(m => {
-          if (m.projectRole === 'Project Manager') recipients.add(m.user.toString());
-        });
-      }
-      recipients.forEach((uid) => io.to(uid).emit('task_updated', populatedTask));
-    }
+    // Real-time socket delivery removed; clients poll REST endpoints for updates.
 
     res.json(populatedTask);
   } catch (error) {

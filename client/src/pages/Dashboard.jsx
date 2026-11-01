@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
 import { AuthContext } from '../context/AuthContext';
-import { getSocket } from '../services/socket';
+// Socket.IO removed; dashboard stats are polled via REST.
 import { Briefcase, CheckSquare, ListTodo, Clock, Bell, ArrowRight, RefreshCw } from 'lucide-react';
 
 const Dashboard = () => {
@@ -26,20 +26,14 @@ const Dashboard = () => {
     fetchDashboardStats();
   }, [fetchDashboardStats]);
 
-  // Real-time: refresh stats whenever a task is created or updated
+  // Poll dashboard stats periodically so task changes appear without a manual refresh
   useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
-
-    const refresh = () => fetchDashboardStats();
-    socket.on('task_updated', refresh);
-    socket.on('task_created', refresh);
-
-    return () => {
-      socket.off('task_updated', refresh);
-      socket.off('task_created', refresh);
-    };
-  }, [fetchDashboardStats]);
+    if (!user) return;
+    const intervalId = setInterval(() => {
+      fetchDashboardStats();
+    }, 15000);
+    return () => clearInterval(intervalId);
+  }, [fetchDashboardStats, user?._id]);
 
   if (loading) {
     return (

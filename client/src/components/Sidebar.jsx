@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { SERVER_ORIGIN } from '../services/api';
 import { LayoutDashboard, Briefcase, Bell, User, Settings, FolderKanban, Users } from 'lucide-react';
 import './layout.css';
 
@@ -96,7 +97,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       <div className="sidebar-footer">
         {user?.profilePicture ? (
           <img
-            src={user.profilePicture.startsWith('/uploads/') ? `http://localhost:5000${user.profilePicture}` : user.profilePicture}
+            src={user.profilePicture.startsWith('/uploads/') ? `${SERVER_ORIGIN}${user.profilePicture}` : user.profilePicture}
             alt={user.name}
             className="avatar"
             onError={(e) => {
