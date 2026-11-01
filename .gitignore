@@ -1,13 +1,50 @@
-.env
-.env.example
-.env.*
-
 # Dependencies
 node_modules/
+.pnp
+.pnp.js
 
 # Build output
 client/dist/
+client/dist-ssr/
+*.local
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # Uploaded files
 server/uploads/
 uploads/
+
+# Vercel
+.vercel/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Coverage / cache
+coverage/
+.cache/
+.parcel-cache/
+.eslintcache
