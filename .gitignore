@@ -12,6 +12,8 @@ client/dist-ssr/
 .env
 .env.*
 !.env.example
+server/.env
+client/.env
 
 # Logs
 logs/
