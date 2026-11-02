@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('./config/db');
@@ -9,18 +8,59 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+// Build the explicit allow-list from CLIENT_URL (comma-separated).
+// In production the frontend and backend share the same Vercel origin, so
+// same-origin requests are also allowed automatically (see isAllowedOrigin).
+const allowedOrigins = (process.env.CLIENT_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173'))
   .split(',')
   .map((o) => o.trim())
   .filter(Boolean);
 
-const corsOrigin = (origin, callback) => {
-  if (!origin) return callback(null, true);
-  if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-    return callback(null, true);
+function isAllowedOrigin(origin, req) {
+  if (!origin) return true;
+  // Explicit allow-list.
+  if (allowedOrigins.includes(origin)) return true;
+  // Preserve existing behavior: an explicit CLIENT_URL='*' opt-in allows any
+  // origin (still reflected per-request, so credentials keep working).
+  if (allowedOrigins.includes('*')) return true;
+  // Same-origin: the request Origin host matches the request Host header.
+  // This covers the Vercel production domain and every preview deployment
+  // without needing to enumerate them, while still being explicit per request.
+  try {
+    const originHost = new URL(origin).host;
+    const requestHost = (req.headers.host || '').trim();
+    if (originHost && requestHost && originHost === requestHost) return true;
+  } catch (e) {
+    // ignore malformed origin
   }
-  return callback(new Error('Not allowed by CORS'));
-};
+  return false;
+}
+
+// CORS handling (explicit origins + credentials + preflight).
+// Placed BEFORE the DB connection middleware so preflight never touches Mongo.
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowed = !origin || isAllowedOrigin(origin, req);
+
+  if (origin && allowed) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Vary', 'Origin');
+  }
+
+  if (req.method === 'OPTIONS') {
+    if (!allowed) return res.sendStatus(403);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      req.headers['access-control-request-headers'] || 'Content-Type,Authorization'
+    );
+    res.setHeader('Access-Control-Max-Age', '86400');
+    return res.sendStatus(204);
+  }
+
+  next();
+});
 
 // Ensure MongoDB connection is established (and reused) for each request.
 app.use(async (req, res, next) => {
@@ -33,7 +73,6 @@ app.use(async (req, res, next) => {
   }
 });
 
-app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
