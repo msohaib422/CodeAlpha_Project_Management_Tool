@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import ToastContainer from './components/ToastContainer';
 const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Projects = lazy(() => import('./pages/Projects'));
 const ProjectDetails = lazy(() => import('./pages/ProjectDetails'));
@@ -54,6 +55,7 @@ const App = () => {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         {/* Protected Router paths */}
         <Route element={<ProtectedRoute />}>

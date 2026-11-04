@@ -142,9 +142,10 @@ const Login = () => {
         </form>
 
         <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.85rem' }}>
-          <span style={{ color: 'var(--text-muted)' }}>
-            Please contact your system administrator to request an account.
-          </span>
+          <span style={{ color: 'var(--text-secondary)' }}>Don't have an account? </span>
+          <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+            Register
+          </Link>
         </div>
       </div>
     </div>

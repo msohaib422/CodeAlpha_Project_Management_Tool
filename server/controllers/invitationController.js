@@ -3,6 +3,7 @@ const Project = require('../models/Project');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const ActivityLog = require('../models/ActivityLog');
+const { sendInvitationEmail, sendProjectActivity } = require('../utils/emailService');
 
 // Helper: send real-time notification
 const sendNotification = async (req, { recipientId, senderId, type, projectId, message }) => {
@@ -87,6 +88,10 @@ const inviteUser = async (req, res) => {
       projectId: project._id,
       message: `${req.user.name} invited you to join project "${project.name}"`,
     });
+
+    // Send invitation email
+    const inviteLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/notifications`;
+    sendInvitationEmail(invitee.email, req.user.name, project.name, inviteLink);
 
     const populated = await ProjectInvitation.findById(invitation._id)
       .populate('project', 'name description')
@@ -213,6 +218,15 @@ const respondToInvitation = async (req, res) => {
           action: 'Member Joined',
           details: `${req.user.name} accepted the invitation and joined the project`,
         });
+
+        // Email all project members
+        const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/projects/${project._id}`;
+        const members = await Project.findById(project._id).populate('members.user', 'email');
+        for (const m of members.members || []) {
+          if (m.user && m.user.email) {
+            sendProjectActivity(m.user.email, project.name, 'a member joined the project', '', req.user.name, `${req.user.name} joined the project`, link);
+          }
+        }
 
         // Notify the inviter
         await sendNotification(req, {

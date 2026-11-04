@@ -241,6 +241,44 @@ body {
   margin-bottom: 30px;
 }
 
+@media (max-width: 768px) {
+  .grid-dashboard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
+  .grid-dashboard .glass-panel {
+    height: 72px;
+    padding: 10px 14px;
+    gap: 10px;
+    min-height: 0;
+    align-items: center;
+  }
+  .grid-dashboard .glass-panel > div:first-child {
+    padding: 6px !important;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+  }
+  .grid-dashboard .glass-panel > div:first-child svg {
+    width: 18px;
+    height: 18px;
+  }
+  .grid-dashboard .glass-panel h3 {
+    font-size: 1.3rem !important;
+    line-height: 1.1;
+    margin: 0 0 8px 0;
+  }
+  .grid-dashboard .glass-panel p {
+    font-size: 0.85rem !important;
+    line-height: 1.1;
+    margin: 0;
+  }
+}
+
 /* Toast Container & Notification styles */
 .toast-container {
   position: fixed;
@@ -317,6 +355,19 @@ body {
     transform: scale(1) translateY(0);
     opacity: 1;
   }
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--card-border) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--border-radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Modal Core Styles */

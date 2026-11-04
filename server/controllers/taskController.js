@@ -63,6 +63,8 @@ const createTask = async (req, res) => {
       `Task "${title}" was created by ${req.user.name}`
     );
 
+    notifyProjectMembers(project, 'created a task', title, req.user.name, `Priority: ${priority || 'medium'}`, req.user._id);
+
     // Send notification to assignee
     if (assignedTo && assignedTo.toString() !== req.user._id.toString()) {
       await sendNotification(req, {
@@ -225,6 +227,12 @@ const updateTask = async (req, res) => {
       );
     }
 
+    // Email all project members about this update
+    const changeDetail = oldStatus !== updatedTask.status
+      ? `Status changed from "${oldStatus}" to "${updatedTask.status}"`
+      : 'Task details updated';
+    notifyProjectMembers(project, 'updated a task', updatedTask.title, req.user.name, changeDetail, req.user._id);
+
     // Notify on reassignment
     const oldAssigneeStr = oldAssignee ? oldAssignee.toString() : null;
     const newAssigneeStr = updatedTask.assignedTo ? updatedTask.assignedTo.toString() : null;
@@ -283,6 +291,8 @@ const deleteTask = async (req, res) => {
       'Task Deleted',
       `Task "${task.title}" was deleted by ${req.user.name}`
     );
+
+    notifyProjectMembers(project, 'deleted a task', task.title, req.user.name, '', req.user._id);
 
     if (task.assignedTo && task.assignedTo.toString() !== req.user._id.toString()) {
       await sendNotification(req, {

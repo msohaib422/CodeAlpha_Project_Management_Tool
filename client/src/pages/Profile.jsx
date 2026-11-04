@@ -80,7 +80,7 @@ const Profile = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', maxWidth: '900px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1.3fr) minmax(320px, 1fr)', gap: '48px', maxWidth: '1100px', marginLeft: 'auto', marginRight: '80px' }}>
         {/* Left Side: Avatar Card */}
         <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', height: 'fit-content' }}>
           <div

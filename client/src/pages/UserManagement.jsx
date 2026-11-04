@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { UserPlus, Trash2, Search, X } from 'lucide-react';
+import Skeleton from '../components/Skeleton';
 import API, { SERVER_ORIGIN } from '../services/api';
 import Modal from '../components/Modal';
 import { NotificationContext } from '../context/NotificationContext';
@@ -77,6 +78,26 @@ const UserManagement = () => {
     }
   };
 
+  const handleApprove = async (u) => {
+    try {
+      await API.put(`/users/${u._id}/approve`);
+      addToast(`${u.name} approved`, 'success');
+      fetchUsers();
+    } catch (err) {
+      addToast(err.response?.data?.message || 'Failed to approve', 'error');
+    }
+  };
+
+  const handleReject = async (u) => {
+    try {
+      await API.put(`/users/${u._id}/reject`);
+      addToast(`${u.name} rejected`, 'success');
+      fetchUsers();
+    } catch (err) {
+      addToast(err.response?.data?.message || 'Failed to reject', 'error');
+    }
+  };
+
   const resetForm = () => {
     setForm({ name: '', email: '', username: '', password: '12345678' });
   };
@@ -119,12 +140,23 @@ const UserManagement = () => {
 
       <div className="glass-panel" style={{ overflowX: 'auto' }}>
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}><div className="spinner" /></div>
+          <div style={{ padding: '16px' }}>
+            {[1,2,3,4].map((i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', borderBottom: '1px solid var(--card-border)' }}>
+                <Skeleton width="38px" height="38px" radius="50%" />
+                <div style={{ flex: 1 }}>
+                  <Skeleton width="120px" height="16px" style={{ marginBottom: '6px' }} />
+                  <Skeleton width="180px" height="12px" />
+                </div>
+                <Skeleton width="60px" height="24px" />
+              </div>
+            ))}
+          </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                {['User', 'Username', 'Actions'].map((h) => (
+                {['User', 'Username', 'Status', 'Actions'].map((h) => (
                   <th key={h} style={{ padding: '14px 16px', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
                 ))}
               </tr>
@@ -157,24 +189,31 @@ const UserManagement = () => {
                     </td>
                     <td style={{ padding: '14px 16px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.username || '—'}</td>
                     <td style={{ padding: '14px 16px' }}>
-                      {!isMe ? (
-                        <button
-                          className="btn"
-                          style={{ padding: '6px 10px', color: 'var(--error)', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', borderRadius: '6px' }}
-                          onClick={() => setDeleteTarget(u)}
-                          title="Delete user"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>
-                      )}
+                      <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '10px', background: u.status === 'Approved' ? 'rgba(16,185,129,0.1)' : u.status === 'Rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', color: u.status === 'Approved' ? 'var(--success)' : u.status === 'Rejected' ? 'var(--error)' : 'var(--warning)', fontWeight: 600 }}>
+                        {u.status || 'Approved'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {u.status === 'Pending Approval' && (
+                          <>
+                            <button className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '0.75rem' }} onClick={() => handleApprove(u)}>Approve</button>
+                            <button className="btn btn-secondary" style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--error)' }} onClick={() => handleReject(u)}>Reject</button>
+                          </>
+                        )}
+                        {!isMe && u.status !== 'Pending Approval' && (
+                          <button className="btn" style={{ padding: '6px 10px', color: 'var(--error)', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', borderRadius: '6px' }} onClick={() => setDeleteTarget(u)} title="Delete user">
+                            <Trash2 size={15} />
+                          </button>
+                        )}
+                        {isMe && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>}
+                      </div>
                     </td>
                   </tr>
                 );
               })}
               {filteredUsers.length === 0 && (
-                <tr><td colSpan={3} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No users found</td></tr>
+                <tr><td colSpan={4} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No users found</td></tr>
               )}
             </tbody>
           </table>

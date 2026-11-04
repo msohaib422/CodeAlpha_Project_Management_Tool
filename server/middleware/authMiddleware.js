@@ -17,6 +17,10 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
 
+      if (req.user.status && req.user.status !== 'Approved') {
+        return res.status(403).json({ message: 'Account not approved' });
+      }
+
       next();
     } catch (error) {
       console.error(error);

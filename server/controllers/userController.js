@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Project = require('../models/Project');
 const Task = require('../models/Task');
 const Notification = require('../models/Notification');
+const { sendApproval, sendRejection, sendAdminCreatedUser } = require('../utils/emailService');
 
 
 // @desc    Get user profile
@@ -212,11 +213,14 @@ const createUser = async (req, res) => {
     });
 
     if (user) {
+      // Send welcome email (no password included)
+      sendAdminCreatedUser(user.email, user.name);
       res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
         username: user.username,
+        status: user.status,
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -253,6 +257,38 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// @desc    Approve a pending user
+// @route   PUT /api/users/:id/approve
+// @access  Private
+const approveUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.status = 'Approved';
+    await user.save();
+    sendApproval(user.email, user.name);
+    res.json({ message: 'User approved', user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reject a pending user
+// @route   PUT /api/users/:id/reject
+// @access  Private
+const rejectUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.status = 'Rejected';
+    await user.save();
+    sendRejection(user.email, user.name, req.body.reason);
+    res.json({ message: 'User rejected', user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
@@ -261,4 +297,6 @@ module.exports = {
   getUsers,
   createUser,
   deleteUser,
+  approveUser,
+  rejectUser,
 };

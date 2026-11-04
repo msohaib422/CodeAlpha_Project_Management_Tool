@@ -5,6 +5,7 @@ import { AuthContext } from '../context/AuthContext';
 import { NotificationContext } from '../context/NotificationContext';
 import Modal from '../components/Modal';
 import { Plus, Archive, Trash2, Users, Folder, ChevronRight, Check, Search } from 'lucide-react';
+import Skeleton from '../components/Skeleton';
 
 const Projects = () => {
   const { user } = useContext(AuthContext);
@@ -153,8 +154,16 @@ const Projects = () => {
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', height: '40vh', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="spinner"></div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+          {[1,2,3].map((i) => (
+            <div key={i} className="glass-panel" style={{ padding: '24px', minHeight: '220px' }}>
+              <Skeleton width="60%" height="20px" style={{ marginBottom: '12px' }} />
+              <Skeleton width="100%" height="14px" style={{ marginBottom: '8px' }} />
+              <Skeleton width="80%" height="14px" style={{ marginBottom: '16px' }} />
+              <Skeleton width="100%" height="8px" style={{ marginBottom: '12px' }} />
+              <Skeleton width="40%" height="14px" />
+            </div>
+          ))}
         </div>
       ) : projects.length > 0 ? (
         <div

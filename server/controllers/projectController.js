@@ -3,6 +3,7 @@ const User = require('../models/User');
 const ActivityLog = require('../models/ActivityLog');
 const Notification = require('../models/Notification');
 const Task = require('../models/Task');
+const { sendProjectActivity } = require('../utils/emailService');
 
 // Helper to log activities
 const logActivity = async (projectId, userId, action, details = '') => {
@@ -215,6 +216,15 @@ const updateProject = async (req, res) => {
       .populate('owner', 'name email username profilePicture')
       .populate('members.user', 'name email username profilePicture');
 
+    // Email members
+    const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/projects/${project._id}`;
+    const proj = await Project.findById(project._id).populate('members.user', 'email');
+    for (const m of proj.members || []) {
+      if (m.user && m.user.email) {
+        sendProjectActivity(m.user.email, project.name, 'project details were updated', '', req.user.name, '', link);
+      }
+    }
+
     res.json(populated);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -295,6 +305,15 @@ const removeMember = async (req, res) => {
 
     await logActivity(project._id, req.user._id, 'Member Removed',
       `${targetUser ? targetUser.name : 'Unknown'} was removed from the project by ${req.user.name}`);
+
+    // Email remaining members
+    const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/projects/${project._id}`;
+    const proj = await Project.findById(project._id).populate('members.user', 'email');
+    for (const m of proj.members || []) {
+      if (m.user && m.user.email) {
+        sendProjectActivity(m.user.email, project.name, 'a member was removed', '', req.user.name, `${targetUser ? targetUser.name : 'A member'} was removed`, link);
+      }
+    }
 
     if (targetUser) {
       await sendNotification(req, {

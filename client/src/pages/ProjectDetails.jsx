@@ -6,6 +6,7 @@ import { NotificationContext } from '../context/NotificationContext';
 import TaskDetailsModal from '../components/TaskDetailsModal';
 import Modal from '../components/Modal';
 import { Plus, Calendar, Trash2, ArrowLeft, Search, Filter, X, UserPlus as UserPlusIcon } from 'lucide-react';
+import Skeleton from '../components/Skeleton';
 import './board.css';
 
 const ProjectDetails = () => {
@@ -286,8 +287,17 @@ const ProjectDetails = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', height: '60vh', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner"></div>
+      <div className="page-container" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+        <Skeleton width="40%" height="32px" style={{ marginBottom: '12px' }} />
+        <Skeleton width="60%" height="16px" style={{ marginBottom: '24px' }} />
+        <div className="board-container">
+          {[1,2,3,4].map((i) => (
+            <div key={i} className="board-column" style={{ padding: '16px' }}>
+              <Skeleton width="80px" height="18px" style={{ marginBottom: '12px' }} />
+              {[1,2].map((j) => <Skeleton key={j} height="90px" style={{ marginBottom: '12px' }} />)}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

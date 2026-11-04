@@ -61,7 +61,7 @@ const Settings = () => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', maxWidth: '650px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', maxWidth: '750px' }}>
         {/* Theme Settings */}
         <div className="glass-panel" style={{ padding: '24px' }}>
           <h2 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>

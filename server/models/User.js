@@ -42,6 +42,19 @@ const UserSchema = new mongoose.Schema(
       default: '',
       maxlength: [300, 'Bio cannot exceed 300 characters'],
     },
+    status: {
+      type: String,
+      enum: ['Pending Verification', 'Pending Approval', 'Approved', 'Rejected'],
+      default: 'Approved',
+    },
+    otp: {
+      type: String,
+      select: false,
+    },
+    otpExpires: {
+      type: Date,
+      select: false,
+    },
     isActive: {
       type: Boolean,
       default: true,

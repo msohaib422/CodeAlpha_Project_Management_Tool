@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { NotificationContext } from '../context/NotificationContext';
 import { AuthContext } from '../context/AuthContext';
 import { Bell, CheckCircle, Clock, Mail, Check, X } from 'lucide-react';
+import Skeleton from '../components/Skeleton';
 import API from '../services/api';
+import './board.css';
 
 const Notifications = () => {
   const { user } = useContext(AuthContext);
@@ -86,7 +88,7 @@ const Notifications = () => {
       </div>
 
       {/* Tabs */}
-      <div className="tabs-header" style={{ marginBottom: '24px' }}>
+      <div className="tabs-header" style={{ marginBottom: '24px', borderBottom: 'none' }}>
         <button
           className={`tab-btn ${activeTab === 'notifications' ? 'active' : ''}`}
           onClick={() => setActiveTab('notifications')}
@@ -113,8 +115,17 @@ const Notifications = () => {
 
       {/* NOTIFICATIONS TAB */}
       {activeTab === 'notifications' && (
-        <div style={{ maxWidth: '700px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {notifications.length > 0 ? (
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {loading && notifications.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {[1,2,3].map((i) => (
+                <div key={i} className="glass-panel" style={{ padding: '18px 20px' }}>
+                  <Skeleton width="100%" height="16px" style={{ marginBottom: '8px' }} />
+                  <Skeleton width="60%" height="12px" />
+                </div>
+              ))}
+            </div>
+          ) : notifications.length > 0 ? (
             <>
               {notifications.map((notif) => (
                 <div
@@ -182,7 +193,7 @@ const Notifications = () => {
 
       {/* INVITATIONS TAB */}
       {activeTab === 'invitations' && (
-        <div style={{ maxWidth: '700px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {pendingInvites.length > 0 ? (
             pendingInvites.map((inv) => (
               <div key={inv._id} className="glass-panel" style={{ padding: '20px', borderLeft: '4px solid #f59e0b' }}>

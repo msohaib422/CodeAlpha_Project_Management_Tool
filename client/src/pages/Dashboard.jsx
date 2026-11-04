@@ -4,6 +4,7 @@ import API from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 // Socket.IO removed; dashboard stats are polled via REST.
 import { Briefcase, CheckSquare, ListTodo, Clock, Bell, ArrowRight, RefreshCw } from 'lucide-react';
+import Skeleton from '../components/Skeleton';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -26,19 +27,33 @@ const Dashboard = () => {
     fetchDashboardStats();
   }, [fetchDashboardStats]);
 
-  // Poll dashboard stats periodically so task changes appear without a manual refresh
-  useEffect(() => {
-    if (!user) return;
-    const intervalId = setInterval(() => {
-      fetchDashboardStats();
-    }, 15000);
-    return () => clearInterval(intervalId);
-  }, [fetchDashboardStats, user?._id]);
+  // (Removed periodic auto-refresh; dashboard loads on mount and manual refresh only)
 
-  if (loading) {
+  if (loading || !stats) {
     return (
-      <div style={{ display: 'flex', height: '60vh', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner"></div>
+      <div className="page-container" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+        <div className="page-header">
+          <div>
+            <Skeleton width="220px" height="32px" />
+            <Skeleton width="300px" height="16px" style={{ marginTop: '8px' }} />
+          </div>
+          <Skeleton width="100px" height="36px" />
+        </div>
+        <div className="grid-dashboard">
+          {[1,2,3,4].map((i) => (
+            <div key={i} className="glass-panel" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <Skeleton width="56px" height="56px" radius="12px" />
+              <div style={{ flex: 1 }}>
+                <Skeleton width="60px" height="28px" />
+                <Skeleton width="100px" height="14px" style={{ marginTop: '8px' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="glass-panel" style={{ padding: '24px' }}>
+          <Skeleton width="200px" height="20px" style={{ marginBottom: '16px' }} />
+          {[1,2,3].map((i) => <Skeleton key={i} height="40px" style={{ marginBottom: '12px' }} />)}
+        </div>
       </div>
     );
   }

@@ -2,6 +2,7 @@ const Comment = require('../models/Comment');
 const Task = require('../models/Task');
 const Project = require('../models/Project');
 const { logActivity, sendNotification } = require('./projectController');
+const { sendProjectActivity } = require('../utils/emailService');
 
 // @desc    Create a comment
 // @route   POST /api/comments
@@ -50,6 +51,15 @@ const createComment = async (req, res) => {
       'Comment Added',
       `Comment added to task "${task.title}" by ${req.user.name}`
     );
+
+    // Email project members
+    const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/projects/${project._id}`;
+    const proj = await Project.findById(project._id).populate('members.user', 'email');
+    for (const m of proj.members || []) {
+      if (m.user && m.user.email) {
+        sendProjectActivity(m.user.email, project.name, 'a comment was added', task.title, req.user.name, message.substring(0, 100), link);
+      }
+    }
 
     // Notify task assignee (if any and not the current user commenting)
     const notifyUsers = new Set();

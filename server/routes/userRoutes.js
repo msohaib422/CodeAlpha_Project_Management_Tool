@@ -8,6 +8,8 @@ const {
   getUsers,
   createUser,
   deleteUser,
+  approveUser,
+  rejectUser,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../utils/upload');
@@ -24,5 +26,7 @@ router.route('/')
   .post(protect, createUser);
 
 router.delete('/:id', protect, deleteUser);
+router.put('/:id/approve', protect, approveUser);
+router.put('/:id/reject', protect, rejectUser);
 
 module.exports = router;
