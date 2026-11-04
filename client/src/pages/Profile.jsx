@@ -123,19 +123,11 @@ const Profile = () => {
           
           <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '2px', textAlign: 'center' }}>{user?.name}</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '6px' }}>@{user?.username || 'N/A'}</p>
-          <p style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600, marginBottom: '20px' }}>{user?.role}</p>
-
           <div style={{ width: '100%', borderTop: '1px solid var(--card-border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
               <Mail size={14} />
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</span>
             </div>
-            {user?.department && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                <Award size={14} />
-                <span>{user.department}</span>
-              </div>
-            )}
           </div>
         </div>
 

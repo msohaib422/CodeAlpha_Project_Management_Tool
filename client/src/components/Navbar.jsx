@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { NotificationContext } from '../context/NotificationContext';
 import { SERVER_ORIGIN } from '../services/api';
-import { Search, Bell, Sun, Moon, LogOut, User as UserIcon, Menu } from 'lucide-react';
+import { Search, Bell, Sun, Moon, LogOut, User as UserIcon, Menu, FolderKanban } from 'lucide-react';
 import './layout.css';
 
 const Navbar = ({ onMenuClick }) => {
@@ -37,18 +37,24 @@ const Navbar = ({ onMenuClick }) => {
         <Menu size={20} />
       </button>
 
-      <form className="navbar-left" onSubmit={handleSearchSubmit}>
-        <div className="search-box">
-          <Search size={18} className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search projects..."
-            className="search-input"
-            value={searchVal}
-            onChange={(e) => setSearchVal(e.target.value)}
-          />
-        </div>
-      </form>
+      <div className="navbar-left">
+        <Link to="/" className="mobile-brand" style={{ textDecoration: 'none', color: 'var(--primary)', display: 'none', alignItems: 'center', gap: '8px', marginLeft: '-4px' }}>
+          <FolderKanban size={24} />
+          <span style={{ fontWeight: 700, fontSize: '1.2rem' }}>CollabPM</span>
+        </Link>
+        <form className="navbar-search-form" onSubmit={handleSearchSubmit} style={{ flex: 1 }}>
+          <div className="search-box">
+            <Search size={18} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search projects..."
+              className="search-input"
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+            />
+          </div>
+        </form>
+      </div>
 
       <div className="navbar-right">
         {/* Theme Toggle */}
@@ -82,7 +88,7 @@ const Navbar = ({ onMenuClick }) => {
             </div>
           </Link>
 
-          <button className="nav-icon-btn" onClick={logout} title="Log Out">
+          <button className="nav-icon-btn nav-logout-desktop" onClick={logout} title="Log Out">
             <LogOut size={20} color="var(--error)" />
           </button>
         </div>

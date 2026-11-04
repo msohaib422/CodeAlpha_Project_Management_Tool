@@ -390,7 +390,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, projectMembers, assignableMem
                 <option value="unassigned">Unassigned</option>
                 {(assignableMembers || projectMembers || []).map((m) => (
                   <option key={m._id} value={m._id}>
-                    {m.name} — {m.role}
+                    {m.name}
                   </option>
                 ))}
               </select>
@@ -432,9 +432,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, projectMembers, assignableMem
                       <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                         {assignedMember.name}
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        {assignedMember.role}
-                      </div>
+
                     </div>
                   </div>
                 );

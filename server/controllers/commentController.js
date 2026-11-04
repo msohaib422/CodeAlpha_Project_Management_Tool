@@ -26,7 +26,6 @@ const createComment = async (req, res) => {
 
     // Check membership — project.members is [{user, projectRole}], not plain IDs
     const isMember =
-      req.user.role === 'Admin' ||
       project.members.some((m) => String(m.user) === String(req.user._id));
     if (!isMember) {
       return res.status(403).json({ message: 'Access denied' });
@@ -102,7 +101,6 @@ const getComments = async (req, res) => {
 
     // Check membership — project.members is [{user, projectRole}], not plain IDs
     const isMember =
-      req.user.role === 'Admin' ||
       project.members.some(
         (m) => String(m.user) === String(req.user._id)
       );

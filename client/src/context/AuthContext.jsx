@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }) => {
           email: data.email,
           profilePicture: data.profilePicture,
           bio: data.bio,
-          role: data.role,
         });
       } catch (error) {
         console.error('Session validation failed:', error);
@@ -51,7 +50,6 @@ export const AuthProvider = ({ children }) => {
         email: data.email,
         profilePicture: data.profilePicture,
         bio: data.bio,
-        role: data.role,
       });
       return { success: true };
     } catch (error) {
@@ -72,7 +70,6 @@ export const AuthProvider = ({ children }) => {
         email: data.email,
         profilePicture: data.profilePicture,
         bio: data.bio,
-        role: data.role,
       });
       return { success: true };
     } catch (error) {
@@ -81,11 +78,49 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Refresh session (sliding 10-minute window while active)
+  const refreshSession = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const { data } = await API.post('/auth/refresh');
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        setUser({
+          _id: data._id,
+          name: data.name,
+          username: data.username,
+          email: data.email,
+          profilePicture: data.profilePicture,
+          bio: data.bio,
+        });
+      }
+    } catch (error) {
+      // Token expired or invalid
+      localStorage.removeItem('token');
+      setUser(null);
+    }
+  };
+
   // Logout handler
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
   };
+
+  // Keep session alive while app is in use
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(refreshSession, 5 * 60 * 1000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refreshSession();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [user]);
 
   // Update profile handler
   const updateProfile = async (profileData) => {
@@ -98,7 +133,6 @@ export const AuthProvider = ({ children }) => {
         email: data.email,
         profilePicture: data.profilePicture,
         bio: data.bio,
-        role: data.role || prevUser.role,
       }));
       return { success: true };
     } catch (error) {

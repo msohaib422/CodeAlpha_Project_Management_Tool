@@ -7,10 +7,10 @@ const {
   respondToInvitation,
   cancelInvitation,
 } = require('../controllers/invitationController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 
-// Send invitation (Admin or Project Manager)
-router.post('/', protect, authorize('Admin', 'Project Manager'), inviteUser);
+// Send invitation (any authenticated member)
+router.post('/', protect, inviteUser);
 
 // Get MY pending invitations (any logged-in user)
 router.get('/my', protect, getMyInvitations);

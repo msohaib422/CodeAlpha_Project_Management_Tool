@@ -9,18 +9,18 @@ const {
   deleteProject,
   removeMember,
 } = require('../controllers/projectController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 
 router.use(protect);
 
 router.route('/')
   .get(getProjects)
-  .post(authorize('Admin'), createProject);
+  .post(createProject);
 
 router.route('/:id')
   .get(getProjectById)
   .put(updateProject)
-  .delete(authorize('Admin'), deleteProject);
+  .delete(deleteProject);
 
 router.get('/:id/activity', getProjectActivity);
 router.delete('/:id/members/:userId', removeMember);

@@ -8,9 +8,8 @@ const {
   getUsers,
   createUser,
   deleteUser,
-  getOrgRoles,
 } = require('../controllers/userController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 const upload = require('../utils/upload');
 
 // Self-service routes
@@ -18,13 +17,12 @@ router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, upload.single('profilePicture'), updateUserProfile);
 router.get('/search', protect, searchUsers);
 router.get('/dashboard', protect, getDashboardStats);
-router.get('/roles', protect, getOrgRoles);
 
-// Admin-only routes
+// User management routes (equal access)
 router.route('/')
-  .get(protect, authorize('Admin'), getUsers)
-  .post(protect, authorize('Admin'), createUser);
+  .get(protect, getUsers)
+  .post(protect, createUser);
 
-router.delete('/:id', protect, authorize('Admin'), deleteUser);
+router.delete('/:id', protect, deleteUser);
 
 module.exports = router;

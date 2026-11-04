@@ -42,4 +42,8 @@ const ProjectSchema = new mongoose.Schema(
   }
 );
 
+ProjectSchema.index({ owner: 1 });
+ProjectSchema.index({ 'members.user': 1 });
+ProjectSchema.index({ archived: 1 });
+
 module.exports = mongoose.model('Project', ProjectSchema);

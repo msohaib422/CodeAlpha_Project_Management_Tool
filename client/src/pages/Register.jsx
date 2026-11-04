@@ -72,7 +72,7 @@ const Register = () => {
           width: '100%',
           maxWidth: '450px',
           padding: '40px 30px',
-          boxShadow: 'var(--box-shadow)',
+
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>

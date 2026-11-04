@@ -1,23 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { UserPlus, Trash2, Shield, Phone, Building2, BadgeCheck, Search, X } from 'lucide-react';
+import { UserPlus, Trash2, Search, X } from 'lucide-react';
 import API, { SERVER_ORIGIN } from '../services/api';
 import Modal from '../components/Modal';
 import { NotificationContext } from '../context/NotificationContext';
 import { AuthContext } from '../context/AuthContext';
-
-const PROJECT_ROLES_DISPLAY = {
-  'Admin': { color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-  'Project Manager': { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-  'Senior Developer': { color: '#6366f1', bg: 'rgba(99,102,241,0.1)' },
-  'Backend Developer': { color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
-  'Frontend Developer': { color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
-  'UI/UX Designer': { color: '#ec4899', bg: 'rgba(236,72,153,0.1)' },
-  'QA Engineer': { color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-  'DevOps Engineer': { color: '#f97316', bg: 'rgba(249,115,22,0.1)' },
-};
-
-const getRoleStyle = (role) =>
-  PROJECT_ROLES_DISPLAY[role] || { color: 'var(--text-secondary)', bg: 'rgba(255,255,255,0.05)' };
 
 const getInitials = (name) => {
   if (!name) return 'U';
@@ -28,22 +14,18 @@ const UserManagement = () => {
   const { user: currentUser } = useContext(AuthContext);
   const { addToast } = useContext(NotificationContext);
   const [users, setUsers] = useState([]);
-  const [roles, setRoles] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [search, setSearch] = useState('');
 
-  // Form State
   const [form, setForm] = useState({
-    name: '', email: '', username: '', role: '',
-    department: '', phoneNumber: '', employeeId: '', password: '12345678',
+    name: '', email: '', username: '', password: '12345678',
   });
 
   useEffect(() => {
     fetchUsers();
-    fetchRoles();
   }, []);
 
   const fetchUsers = async () => {
@@ -57,23 +39,14 @@ const UserManagement = () => {
     }
   };
 
-  const fetchRoles = async () => {
-    try {
-      const { data } = await API.get('/users/roles');
-      setRoles(data);
-    } catch (error) {
-      console.error('Failed to fetch roles');
-    }
-  };
-
   const handleFormChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.role) {
-      addToast('Name, email and role are required', 'error');
+    if (!form.name || !form.email) {
+      addToast('Name and email are required', 'error');
       return;
     }
     setSubmitting(true);
@@ -105,27 +78,14 @@ const UserManagement = () => {
   };
 
   const resetForm = () => {
-    setForm({
-      name: '', email: '', username: '', role: '',
-      department: '', phoneNumber: '', employeeId: '', password: '12345678',
-    });
+    setForm({ name: '', email: '', username: '', password: '12345678' });
   };
 
   const filteredUsers = users.filter((u) =>
     u.name.toLowerCase().includes(search.toLowerCase()) ||
     u.email.toLowerCase().includes(search.toLowerCase()) ||
-    (u.role || '').toLowerCase().includes(search.toLowerCase())
+    (u.username || '').toLowerCase().includes(search.toLowerCase())
   );
-
-  if (currentUser?.role !== 'Admin') {
-    return (
-      <div className="page-container" style={{ textAlign: 'center', paddingTop: '60px' }}>
-        <Shield size={48} color="var(--error)" style={{ marginBottom: '16px' }} />
-        <h2>Access Denied</h2>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>Only the Admin can access User Management.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="page-container" style={{ animation: 'fadeIn 0.3s ease-out' }}>
@@ -140,13 +100,12 @@ const UserManagement = () => {
         </button>
       </div>
 
-      {/* Search bar */}
       <div style={{ position: 'relative', maxWidth: '380px', marginBottom: '20px' }}>
         <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
         <input
           type="text"
           className="form-input"
-          placeholder="Search by name, email or role..."
+          placeholder="Search by name, email or username..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ paddingLeft: '36px', paddingRight: search ? '36px' : '12px' }}
@@ -158,24 +117,21 @@ const UserManagement = () => {
         )}
       </div>
 
-      {/* Users Table */}
       <div className="glass-panel" style={{ overflowX: 'auto' }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center' }}><div className="spinner" /></div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                {['User', 'Role', 'Department', 'Employee ID', 'Phone', 'Actions'].map((h) => (
+                {['User', 'Username', 'Actions'].map((h) => (
                   <th key={h} style={{ padding: '14px 16px', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((u) => {
-                const rs = getRoleStyle(u.role);
                 const isMe = u._id === currentUser._id;
-                const isRootAdmin = u.role === 'Admin';
                 return (
                   <tr key={u._id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.15s' }}>
                     <td style={{ padding: '14px 16px' }}>
@@ -199,16 +155,9 @@ const UserManagement = () => {
                         </div>
                       </div>
                     </td>
+                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.username || '—'}</td>
                     <td style={{ padding: '14px 16px' }}>
-                      <span style={{ padding: '3px 10px', borderRadius: '12px', background: rs.bg, color: rs.color, fontSize: '0.78rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.department || '—'}</td>
-                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.employeeId || '—'}</td>
-                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.phoneNumber || '—'}</td>
-                    <td style={{ padding: '14px 16px' }}>
-                      {!isMe && !isRootAdmin ? (
+                      {!isMe ? (
                         <button
                           className="btn"
                           style={{ padding: '6px 10px', color: 'var(--error)', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', borderRadius: '6px' }}
@@ -218,21 +167,20 @@ const UserManagement = () => {
                           <Trash2 size={15} />
                         </button>
                       ) : (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{isRootAdmin ? 'Protected' : '—'}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>
                       )}
                     </td>
                   </tr>
                 );
               })}
               {filteredUsers.length === 0 && (
-                <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No users found</td></tr>
+                <tr><td colSpan={3} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No users found</td></tr>
               )}
             </tbody>
           </table>
         )}
       </div>
 
-      {/* Create User Modal */}
       <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); resetForm(); }} title="Create New User">
         <form onSubmit={handleCreateUser} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
@@ -250,34 +198,8 @@ const UserManagement = () => {
             <input type="email" className="form-input" placeholder='Enter Email' value={form.email} onChange={(e) => handleFormChange('email', e.target.value)} required />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Organization Role *</label>
-            <select className="form-input" value={form.role} onChange={(e) => handleFormChange('role', e.target.value)} required style={{ cursor: 'pointer' }}>
-              <option value="">— Select Role —</option>
-              {roles.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Department</label>
-              <input type="text" className="form-input" value={form.department} onChange={(e) => handleFormChange('department', e.target.value)} placeholder="e.g. Engineering" />
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Employee ID</label>
-              <input type="text" className="form-input" value={form.employeeId} onChange={(e) => handleFormChange('employeeId', e.target.value)} placeholder="e.g. EMP-001" />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Phone Number</label>
-              <input type="tel" className="form-input" value={form.phoneNumber} onChange={(e) => handleFormChange('phoneNumber', e.target.value)} placeholder="e.g. +92-300-1234567" />
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Initial Password</label>
-              <input type="text" className="form-input" value={form.password} onChange={(e) => handleFormChange('password', e.target.value)} placeholder="Default: 12345678" />
-            </div>
-          </div>
-          <div style={{ padding: '10px 14px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            ℹ️ The user will receive this password and should change it upon first login. Admin cannot be created from this form.
+            <label className="form-label">Initial Password</label>
+            <input type="text" className="form-input" value={form.password} onChange={(e) => handleFormChange('password', e.target.value)} placeholder="Default: 12345678" />
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '4px' }}>
             <button type="button" className="btn" onClick={() => { setIsModalOpen(false); resetForm(); }}>Cancel</button>
@@ -288,7 +210,6 @@ const UserManagement = () => {
         </form>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Confirm Delete User">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <p style={{ color: 'var(--text-secondary)' }}>

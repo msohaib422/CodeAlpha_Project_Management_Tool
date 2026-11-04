@@ -40,7 +40,6 @@ const registerUser = async (req, res) => {
         email: user.email,
         profilePicture: user.profilePicture,
         bio: user.bio,
-        role: user.role,
         token: generateToken(user._id),
       });
     } else {
@@ -77,12 +76,34 @@ const loginUser = async (req, res) => {
         email: user.email,
         profilePicture: user.profilePicture,
         bio: user.bio,
-        role: user.role,
         token: generateToken(user._id),
       });
     } else {
       res.status(401).json({ message: 'Invalid credentials' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Refresh authentication token (sliding 10-minute session)
+// @route   POST /api/auth/refresh
+// @access  Private
+const refreshToken = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({
+      _id: user._id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      profilePicture: user.profilePicture,
+      bio: user.bio,
+      token: generateToken(user._id),
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -103,7 +124,6 @@ const getMe = async (req, res) => {
         email: user.email,
         profilePicture: user.profilePicture,
         bio: user.bio,
-        role: user.role,
       });
     } else {
       res.status(404).json({ message: 'User not found' });
@@ -117,4 +137,5 @@ module.exports = {
   registerUser,
   loginUser,
   getMe,
+  refreshToken,
 };

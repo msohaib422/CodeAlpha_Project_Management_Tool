@@ -4,7 +4,7 @@ import API from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import { NotificationContext } from '../context/NotificationContext';
 import Modal from '../components/Modal';
-import { Plus, Archive, Trash2, Users, Folder, ChevronRight, Check } from 'lucide-react';
+import { Plus, Archive, Trash2, Users, Folder, ChevronRight, Check, Search } from 'lucide-react';
 
 const Projects = () => {
   const { user } = useContext(AuthContext);
@@ -25,10 +25,17 @@ const Projects = () => {
   // Filter
   const [showArchived, setShowArchived] = useState(false);
 
+  // Project search (supports navbar redirect + local input)
+  const [projectQuery, setProjectQuery] = useState(searchVal);
+
+  useEffect(() => {
+    setProjectQuery(searchVal);
+  }, [searchVal]);
+
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const { data } = await API.get(`/projects?search=${encodeURIComponent(searchVal)}&archived=${showArchived}`);
+      const { data } = await API.get(`/projects?search=${encodeURIComponent(projectQuery)}&archived=${showArchived}`);
       setProjects(data);
     } catch (error) {
       console.error('Error loading projects:', error);
@@ -40,7 +47,7 @@ const Projects = () => {
 
   useEffect(() => {
     fetchProjects();
-  }, [searchVal, showArchived]);
+  }, [projectQuery, showArchived]);
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
@@ -124,13 +131,24 @@ const Projects = () => {
           >
             Archived
           </button>
-          {/* Only Root Admin can create projects */}
-          {user?.role === 'Admin' && (
-            <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-              <Plus size={16} />
-              <span>New Project</span>
-            </button>
-          )}
+          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} />
+            <span>New Project</span>
+          </button>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '20px', maxWidth: '400px' }}>
+        <div className="search-box" style={{ position: 'relative' }}>
+          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input
+            type="text"
+            placeholder="Search projects..."
+            className="search-input"
+            style={{ paddingLeft: '36px' }}
+            value={projectQuery}
+            onChange={(e) => setProjectQuery(e.target.value)}
+          />
         </div>
       </div>
 
@@ -268,7 +286,7 @@ const Projects = () => {
           <p style={{ fontSize: '0.9rem', marginBottom: '20px' }}>
             {searchVal ? 'Try adjusting your search terms.' : 'Create a project to start collaborating.'}
           </p>
-          {!searchVal && user?.role === 'Admin' && (
+          {!searchVal && (
             <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
               <Plus size={16} />
               <span>Create Project</span>

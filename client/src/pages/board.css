@@ -1,4 +1,4 @@
-/* Kanban Board Stylesheet */
+/* Task Board Stylesheet */
 
 .board-container {
   display: flex;
@@ -9,7 +9,7 @@
   align-items: flex-start;
 }
 
-/* Kanban Columns */
+/* Task Board Columns */
 .board-column {
   flex: 1;
   min-width: 280px;
@@ -26,7 +26,6 @@
 .board-column.drag-over {
   border-color: var(--primary);
   background-color: var(--bg-tertiary);
-  box-shadow: 0 0 15px var(--primary-glow);
 }
 
 .column-header {
@@ -64,7 +63,7 @@
   min-height: 150px;
 }
 
-/* Kanban Cards */
+/* Task Board Cards */
 .task-card {
   background-color: var(--bg-primary);
   border: 1px solid var(--card-border);
@@ -78,7 +77,6 @@
 .task-card:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .task-card:active {
@@ -217,6 +215,50 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-bar > * {
+    width: 100%;
+  }
+
+  .board-column {
+    min-width: 260px;
+  }
+
+  .members-list {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs-header {
+    gap: 12px;
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .board-container {
+    gap: 12px;
+  }
+
+  .board-column {
+    min-width: 240px;
+  }
+
+  .task-card {
+    padding: 12px;
+  }
 }
 
 /* Activity log timeline */

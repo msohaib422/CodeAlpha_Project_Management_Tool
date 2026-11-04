@@ -28,7 +28,7 @@ const Notifications = () => {
     // Poll invitations periodically so new ones appear without a page refresh
     const intervalId = setInterval(() => {
       fetchInvitations();
-    }, 10000);
+    }, 30000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -220,7 +220,7 @@ const Notifications = () => {
                       <span>Accept</span>
                     </button>
                     <button
-                      className="btn"
+                      className="btn btn-secondary"
                       style={{ padding: '7px 14px', fontSize: '0.85rem', color: 'var(--error)', border: '1px solid rgba(239,68,68,0.3)' }}
                       onClick={() => handleRespond(inv._id, 'Rejected')}
                       disabled={respondingId === inv._id}

@@ -1,21 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// All available organization roles (scalable — add more here without changing logic)
-const ORG_ROLES = [
-  'Admin',
-  'Project Manager',
-  'Backend Developer',
-  'Frontend Developer',
-  'Full Stack Developer',
-  'Mobile Developer',
-  'UI/UX Designer',
-  'QA Engineer',
-  'DevOps Engineer',
-  'Support Engineer',
-  'Intern',
-];
-
 const UserSchema = new mongoose.Schema(
   {
     name: {
@@ -41,28 +26,6 @@ const UserSchema = new mongoose.Schema(
         /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
         'Please add a valid email',
       ],
-    },
-    role: {
-      type: String,
-      enum: ORG_ROLES,
-      default: 'Intern',
-    },
-    department: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-    phoneNumber: {
-      type: String,
-      trim: true,
-      unique: true,
-      sparse: true,
-    },
-    employeeId: {
-      type: String,
-      trim: true,
-      unique: true,
-      sparse: true,
     },
     password: {
       type: String,
@@ -105,4 +68,3 @@ UserSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 module.exports = mongoose.model('User', UserSchema);
-module.exports.ORG_ROLES = ORG_ROLES;

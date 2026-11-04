@@ -2,7 +2,7 @@ const User = require('../models/User');
 const Project = require('../models/Project');
 const Task = require('../models/Task');
 const Notification = require('../models/Notification');
-const { ORG_ROLES } = require('../models/User');
+
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
@@ -75,8 +75,6 @@ const updateUserProfile = async (req, res) => {
         email: updatedUser.email,
         profilePicture: updatedUser.profilePicture,
         bio: updatedUser.bio,
-        role: updatedUser.role,
-        department: updatedUser.department,
       });
     } else {
       res.status(404).json({ message: 'User not found' });
@@ -107,7 +105,7 @@ const searchUsers = async (req, res) => {
         { _id: { $ne: req.user._id } },
       ],
     })
-      .select('_id name username email profilePicture role department')
+      .select('_id name username email profilePicture')
       .limit(10);
 
     res.json(users);
@@ -122,71 +120,46 @@ const searchUsers = async (req, res) => {
 const getDashboardStats = async (req, res) => {
   try {
     const userId = req.user._id;
-    const isAdmin = req.user.role === 'Admin';
 
-    // Find projects managed by the user (owner OR projectRole: 'Project Manager')
-    const managedProjects = await Project.find({
-      $or: [
-        { owner: userId },
-        { members: { $elemMatch: { user: userId, projectRole: 'Project Manager' } } },
-      ],
-    });
-    const managedProjectIds = managedProjects.map((p) => p._id);
+    // Projects the user is a member of
+    const userProjects = await Project.find({ 'members.user': userId }).select('_id');
+    const userProjectIds = userProjects.map((p) => p._id);
 
-    // Combined task filter: Personally assigned OR within managed projects
+    // Tasks assigned to user or in their projects
     const taskFilter = {
       $or: [
         { assignedTo: userId },
-        { project: { $in: managedProjectIds } },
+        { project: { $in: userProjectIds } },
       ],
     };
 
-    // If Admin, they see everything managed in the system by default
-    const finalTaskFilter = isAdmin ? {} : taskFilter;
+    const [assignedTasks, completedTasks, pendingTasks, totalProjects] = await Promise.all([
+      Task.countDocuments(taskFilter),
+      Task.countDocuments({ ...taskFilter, status: 'completed' }),
+      Task.countDocuments({ ...taskFilter, status: { $in: ['todo', 'in_progress', 'review', 'submitted'] } }),
+      Project.countDocuments({ 'members.user': userId }),
+    ]);
 
-    const assignedTasks = await Task.countDocuments(finalTaskFilter);
-    const completedTasks = await Task.countDocuments({ ...finalTaskFilter, status: 'completed' });
-    const pendingTasks = await Task.countDocuments({
-      ...finalTaskFilter,
-      status: { $in: ['todo', 'in_progress', 'review', 'submitted'] },
-    });
-
-    // For Admins: also keep system-wide totals for context
-    const totalProjects = isAdmin
-      ? await Project.countDocuments({})
-      : await Project.countDocuments({ 'members.user': userId });
-
-    const totalTasks = assignedTasks; // "Assigned Tasks" card = managed + personally assigned
-
-    const recentlyUpdatedTasks = await Task.find(finalTaskFilter)
-      .populate('project', 'name')
-      .populate('createdBy', 'name')
-      .sort('-updatedAt')
-      .limit(5);
-
-    const latestNotifications = await Notification.find({ recipient: userId })
-      .populate('sender', 'name username profilePicture')
-      .populate('project', 'name')
-      .sort('-createdAt')
-      .limit(5);
-
-    const unreadNotificationsCount = await Notification.countDocuments({
-      recipient: userId,
-      read: false,
-    });
-
-    // Admin extra stats
-    let totalUsers = 0;
-    if (isAdmin) {
-      totalUsers = await User.countDocuments({});
-    }
+    const [recentlyUpdatedTasks, latestNotifications, unreadNotificationsCount] = await Promise.all([
+      Task.find(taskFilter)
+        .populate('project', 'name')
+        .populate('createdBy', 'name')
+        .sort('-updatedAt')
+        .limit(5),
+      Notification.find({ recipient: userId })
+        .populate('sender', 'name username profilePicture')
+        .populate('project', 'name')
+        .sort('-createdAt')
+        .limit(5),
+      Notification.countDocuments({ recipient: userId, read: false }),
+    ]);
 
     res.json({
       totalProjects,
-      totalTasks,
+      totalTasks: assignedTasks,
       completedTasks,
       pendingTasks,
-      totalUsers,
+      totalUsers: 0,
       recentlyUpdatedTasks,
       latestNotifications,
       unreadNotificationsCount,
@@ -212,21 +185,11 @@ const getUsers = async (req, res) => {
 // @route   POST /api/users
 // @access  Private/Admin
 const createUser = async (req, res) => {
-  const { name, email, username, role, department, phoneNumber, employeeId, password } = req.body;
+  const { name, email, username, password } = req.body;
 
   try {
-    if (!name || !email || !role) {
-      return res.status(400).json({ message: 'Name, email, and role are required' });
-    }
-
-    // Block creating another Admin
-    if (role === 'Admin') {
-      return res.status(403).json({ message: 'Cannot create another Admin. Only one Admin is allowed.' });
-    }
-
-    // Validate role
-    if (!ORG_ROLES.includes(role)) {
-      return res.status(400).json({ message: `Invalid role: ${role}` });
+    if (!name || !email) {
+      return res.status(400).json({ message: 'Name and email are required' });
     }
 
     const userExists = await User.findOne({ email: email.toLowerCase() });
@@ -237,21 +200,7 @@ const createUser = async (req, res) => {
     if (username) {
       const usernameExists = await User.findOne({ username: username.toLowerCase() });
       if (usernameExists) {
-        return res.status(400).json({ message: 'Username already taken' });
-      }
-    }
-
-    if (phoneNumber) {
-      const phoneExists = await User.findOne({ phoneNumber: phoneNumber.trim() });
-      if (phoneExists) {
-        return res.status(400).json({ message: 'Phone number already exists' });
-      }
-    }
-
-    if (employeeId) {
-      const employeeIdExists = await User.findOne({ employeeId: employeeId.trim() });
-      if (employeeIdExists) {
-        return res.status(400).json({ message: 'Employee ID already exists' });
+        return res.status(400).json({ message: 'Username is already taken' });
       }
     }
 
@@ -259,10 +208,6 @@ const createUser = async (req, res) => {
       name,
       email,
       username: username || undefined,
-      role,
-      department: department || '',
-      phoneNumber: phoneNumber || undefined,
-      employeeId: employeeId || undefined,
       password: password || '12345678',
     });
 
@@ -272,9 +217,6 @@ const createUser = async (req, res) => {
         name: user.name,
         email: user.email,
         username: user.username,
-        role: user.role,
-        department: user.department,
-        employeeId: user.employeeId,
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -284,18 +226,13 @@ const createUser = async (req, res) => {
   }
 };
 
-// @desc    Delete user (Admin only)
+// @desc    Delete user
 // @route   DELETE /api/users/:id
-// @access  Private/Admin
+// @access  Private
 const deleteUser = async (req, res) => {
   try {
     const userToDelete = await User.findById(req.params.id);
     if (!userToDelete) return res.status(404).json({ message: 'User not found' });
-
-    // Cannot delete Admin
-    if (userToDelete.role === 'Admin') {
-      return res.status(403).json({ message: 'Cannot delete the Admin account' });
-    }
 
     // Cannot delete yourself
     if (userToDelete._id.toString() === req.user._id.toString()) {
@@ -316,15 +253,6 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// @desc    Get available org roles
-// @route   GET /api/users/roles
-// @access  Private
-const getOrgRoles = async (req, res) => {
-  // Never expose Admin as a creatable role
-  const roles = ORG_ROLES.filter((r) => r !== 'Admin');
-  res.json(roles);
-};
-
 module.exports = {
   getUserProfile,
   updateUserProfile,
@@ -333,5 +261,4 @@ module.exports = {
   getUsers,
   createUser,
   deleteUser,
-  getOrgRoles,
 };

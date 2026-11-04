@@ -51,7 +51,7 @@ const createProject = async (req, res) => {
       name,
       description,
       owner: req.user._id,
-      members: [{ user: req.user._id, projectRole: req.user.role === 'Admin' ? 'Project Manager' : 'Project Manager' }],
+      members: [{ user: req.user._id, projectRole: 'Project Manager' }],
     });
 
     await logActivity(project._id, req.user._id, 'Project Created', `Project "${name}" was created by ${req.user.name}`);
@@ -72,10 +72,7 @@ const getProjects = async (req, res) => {
   try {
     let query = {};
 
-    // Admin sees all projects; others see projects they're members of
-    if (req.user.role !== 'Admin') {
-      query['members.user'] = req.user._id;
-    }
+    query['members.user'] = req.user._id;
 
     if (req.query.search) {
       query.name = { $regex: req.query.search, $options: 'i' };
@@ -84,17 +81,23 @@ const getProjects = async (req, res) => {
     query.archived = req.query.archived === 'true';
 
     const projects = await Project.find(query)
-      .populate('owner', 'name email username profilePicture role')
-      .populate('members.user', 'name email username profilePicture role')
-      .sort('-updatedAt');
+      .populate('owner', 'name email username profilePicture')
+      .populate('members.user', 'name email username profilePicture')
+      .sort('-updatedAt')
+      .lean();
 
-    const projectsWithStats = await Promise.all(
-      projects.map(async (p) => {
-        const totalTasks = await Task.countDocuments({ project: p._id });
-        const completedTasks = await Task.countDocuments({ project: p._id, status: 'completed' });
-        return { ...p.toObject(), totalTasks, completedTasks };
-      })
-    );
+    // Optimize task counts: single aggregation instead of N+1 queries
+    const projectIds = projects.map((p) => p._id);
+    const counts = await Task.aggregate([
+      { $match: { project: { $in: projectIds } } },
+      { $group: { _id: '$project', total: { $sum: 1 }, completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } } } },
+    ]);
+    const countMap = new Map(counts.map((c) => [String(c._id), c]));
+
+    const projectsWithStats = projects.map((p) => {
+      const c = countMap.get(String(p._id));
+      return { ...p, totalTasks: c ? c.total : 0, completedTasks: c ? c.completed : 0 };
+    });
 
     res.json(projectsWithStats);
   } catch (error) {
@@ -108,8 +111,8 @@ const getProjects = async (req, res) => {
 const getProjectById = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id)
-      .populate('owner', 'name email username profilePicture role')
-      .populate('members.user', 'name email username profilePicture role department');
+      .populate('owner', 'name email username profilePicture')
+      .populate('members.user', 'name email username profilePicture');
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
@@ -133,11 +136,6 @@ const getProjectById = async (req, res) => {
       ).exec();
     }
     // ─────────────────────────────────────────────────────────────────────────
-
-    // Admin always has access
-    if (req.user.role === 'Admin') {
-      return res.json(project);
-    }
 
     // Check if user is a member
     const isMember = project.members.some(
@@ -166,8 +164,7 @@ const getProjectActivity = async (req, res) => {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: 'Project not found' });
 
-    const isMember = req.user.role === 'Admin' ||
-      project.members.some((m) => (m.user ? m.user.toString() : m.toString()) === req.user._id.toString());
+    const isMember = project.members.some((m) => (m.user ? m.user.toString() : m.toString()) === req.user._id.toString());
 
     if (!isMember) return res.status(403).json({ message: 'Access denied' });
 
@@ -184,13 +181,8 @@ const getProjectActivity = async (req, res) => {
   }
 };
 
-// Helper: count non-Admin project members
-const countVisibleMembers = (members) =>
-  (members || []).filter((m) => {
-    const u = m.user || m;
-    // Exclude system-wide Admin accounts from the member count
-    return u && u.role !== 'Admin';
-  }).length;
+// Helper: count project members
+const countVisibleMembers = (members) => (members || []).length;
 
 // @desc    Update project details
 // @route   PUT /api/projects/:id
@@ -203,8 +195,8 @@ const updateProject = async (req, res) => {
     if (!project) return res.status(404).json({ message: 'Project not found' });
 
     const isOwner = project.owner.toString() === req.user._id.toString();
-    if (req.user.role !== 'Admin' && !isOwner) {
-      return res.status(403).json({ message: 'Access denied. Only project owners or Admin can edit project settings.' });
+    if (!isOwner) {
+      return res.status(403).json({ message: 'Access denied. Only project owners can edit project settings.' });
     }
 
     project.name = name || project.name;
@@ -220,8 +212,8 @@ const updateProject = async (req, res) => {
 
     const updatedProject = await project.save();
     const populated = await Project.findById(updatedProject._id)
-      .populate('owner', 'name email username profilePicture role')
-      .populate('members.user', 'name email username profilePicture role');
+      .populate('owner', 'name email username profilePicture')
+      .populate('members.user', 'name email username profilePicture');
 
     res.json(populated);
   } catch (error) {
@@ -237,7 +229,7 @@ const deleteProject = async (req, res) => {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: 'Project not found' });
 
-    if (req.user.role !== 'Admin' && project.owner.toString() !== req.user._id.toString()) {
+    if (project.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Access denied.' });
     }
 
@@ -273,18 +265,11 @@ const removeMember = async (req, res) => {
 
     const requesterId = req.user._id.toString();
 
-    // Requester is authorized if:
-    //   (a) they are the system-wide Root Admin, OR
-    //   (b) they are the project owner (project.owner field), OR
-    //   (c) they hold projectRole === 'Project Manager' in the members array
-    const isRootAdmin   = req.user.role === 'Admin';
     const isProjectOwner = project.owner.toString() === requesterId;
-    const isPMInMembers  = project.members.some(
-      (m) => m.user.toString() === requesterId && m.projectRole === 'Project Manager'
-    );
+    const isMember = project.members.some((m) => m.user.toString() === requesterId);
 
-    if (!isRootAdmin && !isProjectOwner && !isPMInMembers) {
-      return res.status(403).json({ message: 'Access denied. Only a Project Manager can remove members.' });
+    if (!isProjectOwner && !isMember) {
+      return res.status(403).json({ message: 'Access denied. You are not a member of this project.' });
     }
 
     // Cannot remove self
@@ -303,16 +288,7 @@ const removeMember = async (req, res) => {
       return res.status(400).json({ message: 'User is not a member of this project.' });
     }
 
-    // Only Root Admin can remove another PM
-    if (memberToRemove.projectRole === 'Project Manager' && !isRootAdmin) {
-      return res.status(403).json({ message: 'Only the Root Admin can remove a Project Manager.' });
-    }
-
-    // Prevent removing a Root Admin
     const targetUser = await User.findById(userId);
-    if (targetUser && targetUser.role === 'Admin') {
-      return res.status(403).json({ message: 'Cannot remove the Root Admin from the project.' });
-    }
 
     project.members = project.members.filter((m) => m.user.toString() !== userId);
     await project.save();
@@ -330,8 +306,8 @@ const removeMember = async (req, res) => {
     }
 
     const populatedProject = await Project.findById(project._id)
-      .populate('owner', 'name email username profilePicture role')
-      .populate('members.user', 'name email username profilePicture role');
+      .populate('owner', 'name email username profilePicture')
+      .populate('members.user', 'name email username profilePicture');
 
     res.json(populatedProject);
   } catch (error) {

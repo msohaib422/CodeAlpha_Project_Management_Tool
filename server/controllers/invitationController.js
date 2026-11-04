@@ -41,28 +41,16 @@ const inviteUser = async (req, res) => {
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ message: 'Project not found' });
 
-    // Admin OR the project's assigned PM (owner or member with PM role) can invite
-    const isAdmin = req.user.role === 'Admin';
+    // Requester must be a member of the project
+    const isMember = project.members.some((m) => m.user.toString() === req.user._id.toString());
     const isProjectOwner = project.owner.toString() === req.user._id.toString();
-    const isPMMember = project.members.some((m) => {
-      const memberId = m.user ? (m.user._id || m.user).toString() : m.toString();
-      return memberId === req.user._id.toString() && m.projectRole === 'Project Manager';
-    });
-
-    if (!isAdmin && !isProjectOwner && !isPMMember) {
-      return res.status(403).json({
-        message: 'Only the Admin or assigned Project Manager can invite members',
-      });
+    if (!isMember && !isProjectOwner) {
+      return res.status(403).json({ message: 'Only project members can invite members' });
     }
 
     // Find invitee by email
     const invitee = await User.findOne({ email: inviteeEmail.toLowerCase() });
     if (!invitee) return res.status(404).json({ message: 'No user found with that email address' });
-
-    // Admin accounts don't need project invitations (they have system-wide access)
-    if (invitee.role === 'Admin') {
-      return res.status(400).json({ message: 'Admin accounts do not require project invitations' });
-    }
 
     // Check if already a member
     const alreadyMember = project.members.some(
@@ -71,36 +59,6 @@ const inviteUser = async (req, res) => {
     if (alreadyMember) {
       return res.status(400).json({ message: `${invitee.name} is already a member of this project` });
     }
-
-    // ── One-PM-per-project rule ──────────────────────────────────────────────
-    // If the invitee is a Project Manager, ensure no PM already exists on this project
-    if (invitee.role === 'Project Manager') {
-      // Only non-Admins are blocked from inviting if a PM exists
-      if (!isAdmin) {
-        // Check if there is already a member with projectRole === 'Project Manager'
-        const existingPMMember = project.members.find(
-          (m) => m.projectRole === 'Project Manager' && m.user.toString() !== project.owner.toString()
-        );
-        if (existingPMMember) {
-          return res.status(400).json({
-            message: 'This project already has an assigned Project Manager. Only one Project Manager is allowed per project.',
-          });
-        }
-
-        // Check if there is already a pending PM invitation
-        const pendingPMInvite = await ProjectInvitation.findOne({
-          project: projectId,
-          status: 'Pending',
-          projectRole: 'Project Manager',
-        });
-        if (pendingPMInvite) {
-          return res.status(400).json({
-            message: 'There is already a pending Project Manager invitation for this project.',
-          });
-        }
-      }
-    }
-    // ─────────────────────────────────────────────────────────────────────────
 
     // Check for existing pending invitation for this specific user
     const existingInvite = await ProjectInvitation.findOne({
@@ -112,12 +70,12 @@ const inviteUser = async (req, res) => {
       return res.status(400).json({ message: `A pending invitation already exists for ${invitee.name}` });
     }
 
-    // Create invitation — use invitee's org role as project role automatically
+    // Create invitation
     const invitation = await ProjectInvitation.create({
       project: projectId,
       invitee: invitee._id,
       inviter: req.user._id,
-      projectRole: invitee.role, // Auto-use their organization role
+      projectRole: 'Team Member',
       status: 'Pending',
     });
 
@@ -132,8 +90,8 @@ const inviteUser = async (req, res) => {
 
     const populated = await ProjectInvitation.findById(invitation._id)
       .populate('project', 'name description')
-      .populate('invitee', 'name email role profilePicture')
-      .populate('inviter', 'name email profilePicture role');
+      .populate('invitee', 'name email profilePicture')
+      .populate('inviter', 'name email profilePicture');
 
     res.status(201).json(populated);
   } catch (error) {
@@ -151,7 +109,7 @@ const getMyInvitations = async (req, res) => {
       status: 'Pending',
     })
       .populate('project', 'name description')
-      .populate('inviter', 'name email profilePicture role')
+      .populate('inviter', 'name email profilePicture')
       .sort('-createdAt');
 
     res.json(invitations);
@@ -168,20 +126,16 @@ const getProjectInvitations = async (req, res) => {
     const project = await Project.findById(req.params.projectId);
     if (!project) return res.status(404).json({ message: 'Project not found' });
 
-    const isAdmin = req.user.role === 'Admin';
+    const isMember = project.members.some((m) => m.user.toString() === req.user._id.toString());
     const isProjectOwner = project.owner.toString() === req.user._id.toString();
-    const isPMInMembers = project.members.some(
-      (m) => m.user.toString() === req.user._id.toString() && m.projectRole === 'Project Manager'
-    );
-
-    if (!isAdmin && !isProjectOwner && !isPMInMembers) {
+    if (!isMember && !isProjectOwner) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
     const invitations = await ProjectInvitation.find({
       project: req.params.projectId,
     })
-      .populate('invitee', 'name email role department profilePicture')
+      .populate('invitee', 'name email profilePicture')
       .populate('inviter', 'name email profilePicture')
       .sort('-createdAt');
 
@@ -246,20 +200,9 @@ const respondToInvitation = async (req, res) => {
       );
 
       if (!alreadyMember) {
-        if (req.user.role === 'Project Manager') {
-          // If the new joiner is a PM, downgrade any EXISTING PM members to 'Member'
-          // IMPORTANT: Never downgrade the project owner's own record
-          project.members.forEach(m => {
-            const isOwner = m.user.toString() === project.owner.toString();
-            if (m.projectRole === 'Project Manager' && !isOwner) {
-              m.projectRole = 'Member';
-            }
-          });
-        }
-
         project.members.push({
           user: req.user._id,
-          projectRole: req.user.role, // Use org role automatically
+          projectRole: 'Team Member',
         });
         await project.save();
 
@@ -268,7 +211,7 @@ const respondToInvitation = async (req, res) => {
           project: project._id,
           user: req.user._id,
           action: 'Member Joined',
-          details: `${req.user.name} accepted the invitation and joined the project as ${req.user.role}`,
+          details: `${req.user.name} accepted the invitation and joined the project`,
         });
 
         // Notify the inviter
@@ -305,10 +248,7 @@ const cancelInvitation = async (req, res) => {
     const invitation = await ProjectInvitation.findById(req.params.id);
     if (!invitation) return res.status(404).json({ message: 'Invitation not found' });
 
-    if (
-      req.user.role !== 'Admin' &&
-      invitation.inviter.toString() !== req.user._id.toString()
-    ) {
+    if (invitation.inviter.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to cancel this invitation' });
     }
 

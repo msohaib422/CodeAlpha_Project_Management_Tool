@@ -123,7 +123,7 @@ export const NotificationProvider = ({ children }) => {
       }
     };
 
-    const intervalId = setInterval(poll, 10000);
+    const intervalId = setInterval(poll, 20000);
     return () => clearInterval(intervalId);
   }, [user?._id]);
 

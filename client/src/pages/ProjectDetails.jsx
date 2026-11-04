@@ -54,21 +54,10 @@ const ProjectDetails = () => {
   const [sendingInvite, setSendingInvite] = useState(false);
 
   // ─── Permission Helpers ────────────────────────────────────────────────────
-  // isAdmin: system-wide root admin
-  const isAdmin = user?.role === 'Admin';
-  // isProjectOwner: user is the project's owner field (typically the Admin who created it)
   const isProjectOwner = project ? String(project.owner?._id || project.owner) === String(user?._id) : false;
-  // isProjectPM: user holds projectRole === 'Project Manager' in the members array
-  const isProjectPM = project
-    ? project.members?.some((m) => {
-        const mid = String(m.user?._id || m.user);
-        return mid === String(user?._id) && m.projectRole === 'Project Manager';
-      })
-    : false;
-  // canManage: create/edit/delete tasks — Admin, Project Owner, or Project Manager
-  const canManage = isAdmin || isProjectOwner || isProjectPM;
-  // canInvite: invite/remove members — Admin, Project Owner, or Project Manager
-  const canInvite = isAdmin || isProjectOwner || isProjectPM;
+  // All project members have equal capabilities
+  const canManage = true;
+  const canInvite = true;
   // ──────────────────────────────────────────────────────────────────────────
 
   const fetchProjectInvitations = async () => {
@@ -126,9 +115,7 @@ const ProjectDetails = () => {
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await fetchProjectDetails();
-      await fetchTasks();
-      await fetchActivities(1, false);
+      await Promise.all([fetchProjectDetails(), fetchTasks(), fetchActivities(1, false)]);
       setLoading(false);
     };
     init();
@@ -159,8 +146,7 @@ const ProjectDetails = () => {
       try {
         const { data } = await API.get(`/users/search?query=${encodeURIComponent(inviteEmail)}`);
         const memberIds = project?.members?.map((m) => m.user?._id || m.user) || [];
-        // Exclude already members and Admin accounts
-        const filtered = data.filter((u) => !memberIds.includes(u._id) && u.role !== 'Admin');
+        const filtered = data.filter((u) => !memberIds.includes(u._id));
         setSearchResults(filtered);
       } catch (error) {
         console.error('Error searching users:', error);
@@ -172,7 +158,7 @@ const ProjectDetails = () => {
     return () => clearTimeout(timer);
   }, [inviteEmail, project]);
 
-  // Send invitation — no role selection, backend auto-uses org role
+  // Send invitation
   const handleSendInvitation = async (e) => {
     e.preventDefault();
     if (!selectedInvitee) { addToast('Please select a user to invite', 'error'); return; }
@@ -325,12 +311,10 @@ const ProjectDetails = () => {
     completed: tasks.filter((t) => t.status === 'completed'),
   };
 
-  // Flatten project members for dropdowns — correctly map {user, projectRole} objects
-  // Excludes Admin (unless they are the PM/owner) and keeps only actual project members
+  // Flatten project members for dropdowns
   const projectMembersList = project.members
     ?.map((m) => m.user || m)
-    .filter(Boolean)
-    .filter((u) => u.role !== 'Admin' || project?.owner?._id === u._id) || [];
+    .filter(Boolean) || [];
 
   // For the "Assign To" dropdown: exclude the current logged-in user (PM)
   // PMs assign tasks TO team members, not to themselves
@@ -348,16 +332,7 @@ const ProjectDetails = () => {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <h1 className="page-title">{project.name}</h1>
-            {isProjectPM && (
-              <span style={{ fontSize: '0.72rem', background: 'rgba(99,102,241,0.15)', color: 'var(--primary)', padding: '3px 10px', borderRadius: '12px', fontWeight: 700, border: '1px solid rgba(99,102,241,0.3)' }}>
-                Project Manager
-              </span>
-            )}
-            {isAdmin && !isProjectPM && (
-              <span style={{ fontSize: '0.72rem', background: 'rgba(16,185,129,0.12)', color: 'var(--success)', padding: '3px 10px', borderRadius: '12px', fontWeight: 700, border: '1px solid rgba(16,185,129,0.3)' }}>
-                Admin
-              </span>
-            )}
+
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px', maxWidth: '800px' }}>
             {project.description || 'No description provided.'}
@@ -371,10 +346,10 @@ const ProjectDetails = () => {
       {/* Tabs */}
       <div className="tabs-header">
         <button className={`tab-btn ${activeTab === 'board' ? 'active' : ''}`} onClick={() => setActiveTab('board')}>
-          Kanban Board
+          Task Board
         </button>
         <button className={`tab-btn ${activeTab === 'members' ? 'active' : ''}`} onClick={() => setActiveTab('members')}>
-          Members ({project.members?.filter(m => (m.user?.role || m.role) !== 'Admin').length || 0})
+          Members ({project.members?.length || 0})
         </button>
         <button className={`tab-btn ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => setActiveTab('logs')}>
           Activity Log
@@ -427,7 +402,7 @@ const ProjectDetails = () => {
             </select>
           </div>
 
-          {/* Kanban Lanes */}
+          {/* Task Board Lanes */}
           <div className="board-container">
             {Object.keys(columns).map((statusKey) => {
               const statusName = statusKey.replace('_', ' ');
@@ -566,9 +541,7 @@ const ProjectDetails = () => {
                             <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{u.name}</div>
                             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{u.email}</div>
                           </div>
-                          <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '10px', background: 'rgba(99,102,241,0.1)', color: 'var(--primary)', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                            {u.role}
-                          </span>
+
                         </div>
                       ))}
                     </div>
@@ -579,7 +552,7 @@ const ProjectDetails = () => {
                 </div>
               ) : (
                 <form onSubmit={handleSendInvitation} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {/* Selected user card — show their org role which will be auto-used */}
+                  {/* Selected user card */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px' }}>
                     <div className="avatar" style={{ width: '40px', height: '40px', fontSize: '0.9rem', flexShrink: 0 }}>
                       {getInitials(selectedInvitee.name)}
@@ -587,18 +560,12 @@ const ProjectDetails = () => {
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700 }}>{selectedInvitee.name}</div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{selectedInvitee.email}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, marginTop: '2px' }}>
-                        Will join as: <strong>{selectedInvitee.role}</strong>
-                      </div>
+
                     </div>
                     <button type="button" onClick={() => { setSelectedInvitee(null); setInviteEmail(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}>
                       <X size={16} />
                     </button>
                   </div>
-
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', background: 'var(--bg-primary)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--card-border)', margin: 0 }}>
-                    ℹ️ Their organization role <strong>{selectedInvitee.role}</strong> will automatically be used as their project role.
-                  </p>
 
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button type="button" className="btn" style={{ flex: 1 }} onClick={() => { setSelectedInvitee(null); setInviteEmail(''); }}>Cancel</button>
@@ -627,7 +594,7 @@ const ProjectDetails = () => {
                       <div>
                         <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{inv.invitee?.name}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {inv.invitee?.email} · <span style={{ color: 'var(--primary)' }}>{inv.invitee?.role}</span>
+                          {inv.invitee?.email}
                         </div>
                       </div>
                     </div>
@@ -643,17 +610,15 @@ const ProjectDetails = () => {
           {/* Members list — visible to all project members */}
           <div>
             <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '16px' }}>
-              Project Team ({project.members?.filter(m => (m.user?.role || m.role) !== 'Admin').length || 0})
+              Project Team ({project.members?.length || 0})
             </h2>
             <div className="members-list">
               {project.members?.filter((member, index, self) => {
                  const memberUser = member.user || member;
                  if (!memberUser || !memberUser._id) return false;
-                 // Prevent duplicates: only keep the first occurrence of each user ID
                  const uid = String(memberUser._id);
                  if (self.findIndex(m => String(m.user?._id || m.user) === uid) !== index) return false;
-                 // Hide Root Admin entries from the visible list
-                 return memberUser.role !== 'Admin';
+                 return true;
               }).map((member) => {
                 const memberUser  = member.user || member;
                 // Is THIS member card the project owner?
@@ -670,20 +635,14 @@ const ProjectDetails = () => {
                       <div style={{ minWidth: 0 }}>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>{memberUser.name}</span>
                         <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, display: 'block' }}>
-                          {member.projectRole || memberUser.role}
+                          {member.projectRole || 'Team Member'}
                         </span>
                       </div>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {isMemberPM && (
-                        <span style={{ fontSize: '0.7rem', background: 'var(--primary-glow)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
-                          PM
-                        </span>
-                      )}
-                      {/* Show remove button: only if the viewer has canInvite permission,
-                          the member is NOT themselves, and the member is NOT a PM (unless viewer is Root Admin) */}
-                      {canInvite && !isMemberSelf && !isMemberTheOwner && (isAdmin || !isMemberPM) && (
+                      {/* Show remove button */}
+                      {canInvite && !isMemberSelf && !isMemberTheOwner && (
                         <button
                           className="btn"
                           style={{ padding: '4px 8px', color: 'var(--error)', border: 'none', background: 'none' }}
@@ -791,11 +750,9 @@ const ProjectDetails = () => {
   >
     <option value="unassigned">Unassigned</option>
 
-    {assignableMembersList
-      .filter((m) => m.role !== "Admin")
-      .map((m) => (
+    {assignableMembersList.map((m) => (
         <option key={m._id} value={m._id}>
-          {m.name} — {m.role}
+          {m.name}
         </option>
       ))}
   </select>

@@ -1,12 +1,19 @@
 import React, { useContext } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { SERVER_ORIGIN } from '../services/api';
-import { LayoutDashboard, Briefcase, Bell, User, Settings, FolderKanban, Users } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Bell, User, Settings, FolderKanban, Users, LogOut } from 'lucide-react';
 import './layout.css';
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+    if (window.innerWidth <= 768) onClose();
+  };
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -79,41 +86,45 @@ const Sidebar = ({ isOpen, onClose }) => {
               <span>Settings</span>
             </NavLink>
           </li>
-          {user?.role === 'Admin' && (
-            <li>
-              <NavLink
-                to="/users"
-                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                onClick={() => window.innerWidth <= 768 && onClose()}
-              >
-                <Users size={20} />
-                <span>Manage Users</span>
-              </NavLink>
-            </li>
-          )}
+          <li>
+            <NavLink
+              to="/users"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={() => window.innerWidth <= 768 && onClose()}
+            >
+              <Users size={20} />
+              <span>Manage Users</span>
+            </NavLink>
+          </li>
         </ul>
       </nav>
 
-      <div className="sidebar-footer">
-        {user?.profilePicture ? (
-          <img
-            src={user.profilePicture.startsWith('/uploads/') ? `${SERVER_ORIGIN}${user.profilePicture}` : user.profilePicture}
-            alt={user.name}
-            className="avatar"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }}
-          />
-        ) : null}
-        <div className="avatar" style={{ display: user?.profilePicture ? 'none' : 'flex' }}>
-          {getInitials(user?.name)}
+      <div className="sidebar-footer" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {user?.profilePicture ? (
+            <img
+              src={user.profilePicture.startsWith('/uploads/') ? `${SERVER_ORIGIN}${user.profilePicture}` : user.profilePicture}
+              alt={user.name}
+              className="avatar"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div className="avatar" style={{ display: user?.profilePicture ? 'none' : 'flex' }}>
+            {getInitials(user?.name)}
+          </div>
+          <div className="user-info">
+            <span className="user-name">{user?.name}</span>
+            <span className="user-username">@{user?.username}</span>
+          </div>
         </div>
-        <div className="user-info">
-          <span className="user-name">{user?.name}</span>
-          <span className="user-username">@{user?.username}</span>
-        </div>
+        <button className="sidebar-logout-btn" onClick={handleLogout} style={{ display: 'none' }}>
+          <LogOut size={18} />
+          <span>Sign Out</span>
+        </button>
       </div>
     </aside>
   );

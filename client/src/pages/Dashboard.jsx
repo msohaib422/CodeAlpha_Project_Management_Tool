@@ -52,12 +52,9 @@ const Dashboard = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Welcome, {user?.name}!</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-            <span style={{ padding: '2px 8px', borderRadius: '12px', background: 'var(--primary)', color: '#fff', fontSize: '0.8rem', fontWeight: 600 }}>
-              {user?.role}
-            </span>
+          <div style={{ marginTop: '4px' }}>
             <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-              {user?.role === 'Admin' ? 'Here is a summary of your system.' : 'Here is a summary of your workspace activities and tasks.'}
+              Here is a summary of your workspace activities and tasks.
             </p>
           </div>
         </div>
@@ -165,18 +162,16 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Admin Quick Links */}
-        {user?.role === 'Admin' && (
-          <div className="glass-panel" style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '20px' }}>Admin Actions</h2>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-              Manage users, assign roles, and configure system settings.
-            </p>
-            <Link to="/users" className="btn btn-primary" style={{ display: 'inline-flex', width: '100%', justifyContent: 'center' }}>
-              Go to User Management
-            </Link>
-          </div>
-        )}
+        {/* Quick Links */}
+        <div className="glass-panel" style={{ padding: '24px' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '20px' }}>Quick Actions</h2>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+            Manage users and configure your workspace.
+          </p>
+          <Link to="/users" className="btn btn-primary" style={{ display: 'inline-flex', width: '100%', justifyContent: 'center' }}>
+            Go to User Management
+          </Link>
+        </div>
       </div>
 
       {/* Recently Updated Tasks Table/List */}

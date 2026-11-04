@@ -20,28 +20,6 @@ const getDueDateQuery = (filter) => {
   return null;
 };
 
-/**
- * Helper: Check if the current user is the Project Manager of a specific project.
- * A user qualifies as PM if they are:
- *   1. The project owner (Admin who created it), OR
- *   2. A member whose projectRole is exactly 'Project Manager' (invited by Admin).
- *
- * NOTE: project.members[].user is an UNpopulated ObjectId here.
- * Use String() directly to avoid any (._id || self) pattern ambiguity.
- */
-const isProjectManager = (project, userId) => {
-  const userIdStr = String(userId);
-
-  // Check 1: Is the user the project owner?
-  if (String(project.owner) === userIdStr) return true;
-
-  // Check 2: Is the user a member whose projectRole is 'Project Manager'?
-  const pmMember = project.members.find(
-    (m) => String(m.user) === userIdStr && m.projectRole === 'Project Manager'
-  );
-  return Boolean(pmMember);
-};
-
 // @desc    Create a task
 // @route   POST /api/tasks
 // @access  Private — Admin or assigned Project Manager only
@@ -58,13 +36,12 @@ const createTask = async (req, res) => {
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    // Only the project's assigned PM (owner) can create tasks
-    const isPM = isProjectManager(project, req.user._id);
-
-    if (!isPM) {
-      return res.status(403).json({
-        message: 'Only the assigned Project Manager can create tasks',
-      });
+    // Any project member can create tasks
+    const isMember = project.members.some(
+      (m) => m.user.toString() === req.user._id.toString()
+    );
+    if (!isMember) {
+      return res.status(403).json({ message: 'Access denied. You are not a member of this project.' });
     }
 
     const task = await Task.create({
@@ -99,7 +76,7 @@ const createTask = async (req, res) => {
     }
 
     const populatedTask = await Task.findById(task._id)
-      .populate('assignedTo', 'name username email profilePicture role')
+      .populate('assignedTo', 'name username email profilePicture')
       .populate('createdBy', 'name username email profilePicture');
 
     // Real-time socket delivery removed; clients poll REST endpoints for updates.
@@ -126,12 +103,10 @@ const getTasks = async (req, res) => {
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    // Admin sees all; members must be in the project
-    const isAdmin = req.user.role === 'Admin';
     const isMember = project.members.some(
       (m) => m.user.toString() === req.user._id.toString()
     );
-    if (!isAdmin && !isMember) {
+    if (!isMember) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -159,7 +134,7 @@ const getTasks = async (req, res) => {
 
     const total = await Task.countDocuments(filterQuery);
     const tasks = await Task.find(filterQuery)
-      .populate('assignedTo', 'name username email profilePicture role')
+      .populate('assignedTo', 'name username email profilePicture')
       .populate('createdBy', 'name username email profilePicture')
       .sort('dueDate')
       .skip(skip)
@@ -193,28 +168,12 @@ const updateTask = async (req, res) => {
       return res.status(404).json({ message: 'Associated project not found' });
     }
 
-    const isPM = isProjectManager(project, req.user._id);
-    const isAssignee = task.assignedTo && task.assignedTo.toString() === req.user._id.toString();
     const isMember = project.members.some(
       (m) => m.user && (m.user._id || m.user).toString() === req.user._id.toString()
     );
 
-    if (!isPM) {
-      if (isMember && isAssignee) {
-        const allowedFields = ['status'];
-        const requestFields = Object.keys(req.body);
-        const isOnlyStatus = requestFields.every((field) => allowedFields.includes(field));
-
-        if (!isOnlyStatus) {
-          return res.status(403).json({
-            message: 'Normal members can only update the status of tasks assigned to themselves.',
-          });
-        }
-      } else {
-        return res.status(403).json({
-          message: 'Only the assigned Project Manager can update tasks',
-        });
-      }
+    if (!isMember) {
+      return res.status(403).json({ message: 'Access denied. You are not a member of this project.' });
     }
 
     const oldStatus = task.status;
@@ -282,7 +241,7 @@ const updateTask = async (req, res) => {
     }
 
     const populatedTask = await Task.findById(updatedTask._id)
-      .populate('assignedTo', 'name username email profilePicture role')
+      .populate('assignedTo', 'name username email profilePicture')
       .populate('createdBy', 'name username email profilePicture');
 
     // Real-time socket delivery removed; clients poll REST endpoints for updates.
@@ -308,12 +267,12 @@ const deleteTask = async (req, res) => {
       return res.status(404).json({ message: 'Associated project not found' });
     }
 
-    const isPM = isProjectManager(project, req.user._id);
+    const isMember = project.members.some(
+      (m) => m.user && (m.user._id || m.user).toString() === req.user._id.toString()
+    );
 
-    if (!isPM) {
-      return res.status(403).json({
-        message: 'Only the assigned Project Manager can delete tasks',
-      });
+    if (!isMember) {
+      return res.status(403).json({ message: 'Access denied. You are not a member of this project.' });
     }
 
     await Task.findByIdAndDelete(req.params.id);
