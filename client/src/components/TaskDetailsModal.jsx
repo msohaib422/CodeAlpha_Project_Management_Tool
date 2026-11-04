@@ -190,6 +190,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, projectMembers, assignableMem
                 <input
                   type="text"
                   className="form-input"
+                  placeholder="Enter task title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   disabled={loading}
@@ -201,6 +202,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, projectMembers, assignableMem
                 <textarea
                   className="form-input"
                   style={{ minHeight: '120px', resize: 'vertical' }}
+                  placeholder="Write task description..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   disabled={loading}
@@ -319,6 +321,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, projectMembers, assignableMem
                               type="text"
                               className="form-input"
                               style={{ padding: '6px 10px', fontSize: '0.85rem' }}
+                              placeholder="Edit comment..."
                               value={editingCommentText}
                               onChange={(e) => setEditingCommentText(e.target.value)}
                             />
@@ -496,6 +499,7 @@ const TaskDetailsModal = ({ isOpen, onClose, task, projectMembers, assignableMem
               type="date" 
               className="form-input"
               style={{ padding: '8px 12px', fontSize: '0.85rem' }}
+              placeholder="Select due date"
               value={dueDate}
               onChange={(e) => {
                 setDueDate(e.target.value);

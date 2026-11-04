@@ -137,6 +137,7 @@ const Notifications = () => {
                     alignItems: 'flex-start',
                     justifyContent: 'space-between',
                     gap: '16px',
+                    border: 'none',
                     borderLeft: notif.read ? '1px solid var(--card-border)' : '4px solid var(--primary)',
                     background: notif.read ? 'var(--card-bg)' : 'rgba(99, 102, 241, 0.04)',
                   }}
@@ -182,7 +183,7 @@ const Notifications = () => {
               )}
             </>
           ) : (
-            <div className="glass-panel" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <div className="glass-panel" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', border: 'none' }}>
               <Bell size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
               <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '8px' }}>All Caught Up!</h3>
               <p>No notifications yet.</p>
@@ -196,7 +197,7 @@ const Notifications = () => {
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {pendingInvites.length > 0 ? (
             pendingInvites.map((inv) => (
-              <div key={inv._id} className="glass-panel" style={{ padding: '20px', borderLeft: '4px solid #f59e0b' }}>
+              <div key={inv._id} className="glass-panel" style={{ padding: '20px', border: 'none', borderLeft: '4px solid #f59e0b' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', gap: '14px' }}>
                     <div className="avatar" style={{ width: '40px', height: '40px', fontSize: '0.9rem', flexShrink: 0, background: '#f59e0b' }}>
@@ -244,7 +245,7 @@ const Notifications = () => {
               </div>
             ))
           ) : (
-            <div className="glass-panel" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <div className="glass-panel" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', border: 'none' }}>
               <Mail size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
               <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '8px' }}>No Pending Invitations</h3>
               <p>You have no project invitations at the moment.</p>

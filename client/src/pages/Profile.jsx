@@ -138,6 +138,7 @@ const Profile = () => {
             <input
               type="text"
               className="form-input"
+              placeholder="Enter your full name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={submitting}
@@ -161,6 +162,7 @@ const Profile = () => {
             <input
               type="email"
               className="form-input"
+              placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={submitting}

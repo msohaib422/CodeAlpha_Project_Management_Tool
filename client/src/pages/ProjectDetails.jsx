@@ -774,6 +774,7 @@ const ProjectDetails = () => {
               <input
                 type="date"
                 className="form-input"
+                placeholder="Select due date"
                 value={newTaskDueDate}
                 onChange={(e) => setNewTaskDueDate(e.target.value)}
                 disabled={submittingTask}

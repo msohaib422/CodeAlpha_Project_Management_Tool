@@ -99,7 +99,7 @@ body {
 }
 
 .glass-panel:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--card-border);
 }
 
 /* Button UI */
