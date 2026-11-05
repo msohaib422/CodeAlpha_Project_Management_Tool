@@ -12,13 +12,14 @@ const {
   rejectUser,
   updateUser,
   updateUserPassword,
+  updateUserProfileImage,
 } = require('../controllers/userController');
 const { protect, userManagementAdmin } = require('../middleware/authMiddleware');
 const upload = require('../utils/upload');
 
 // Self-service routes
 router.get('/profile', protect, getUserProfile);
-router.put('/profile', protect, upload.single('profilePicture'), updateUserProfile);
+router.put('/profile', protect, upload.singleWithError, updateUserProfile);
 router.get('/search', protect, searchUsers);
 router.get('/dashboard', protect, getDashboardStats);
 
@@ -31,6 +32,7 @@ router.delete('/:id', protect, userManagementAdmin, deleteUser);
 router.put('/:id/approve', protect, userManagementAdmin, approveUser);
 router.put('/:id/reject', protect, userManagementAdmin, rejectUser);
 router.put('/:id/password', protect, userManagementAdmin, updateUserPassword);
+router.put('/:id/profile-picture', protect, userManagementAdmin, upload.singleWithError, updateUserProfileImage);
 router.put('/:id', protect, userManagementAdmin, updateUser);
 
 module.exports = router;

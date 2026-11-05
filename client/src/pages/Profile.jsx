@@ -107,19 +107,47 @@ const Profile = () => {
             {!avatarSrc && getInitials(name)}
           </div>
           
-          <label htmlFor="avatar-upload" style={{
-            cursor: 'pointer',
-            fontSize: '0.8rem',
-            color: 'var(--primary)',
-            fontWeight: 600,
-            marginBottom: '20px',
-            padding: '6px 14px',
-            border: '1px solid var(--primary)',
-            borderRadius: '20px',
-          }}>
-            Change Photo
-            <input id="avatar-upload" type="file" accept="image/jpeg,image/png,image/jpg" onChange={handleFileChange} style={{ display: 'none' }} />
-          </label>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <label htmlFor="avatar-upload" style={{
+              cursor: 'pointer',
+              fontSize: '0.8rem',
+              color: 'var(--primary)',
+              fontWeight: 600,
+              padding: '6px 14px',
+              border: '1px solid var(--primary)',
+              borderRadius: '20px',
+            }}>
+              Change Photo
+              <input id="avatar-upload" type="file" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp" onChange={handleFileChange} style={{ display: 'none' }} />
+            </label>
+            {user?.profilePicture && (
+              <button
+                type="button"
+                onClick={async () => {
+                  setSubmitting(true);
+                  const formData = new FormData();
+                  formData.append('name', name);
+                  formData.append('email', email);
+                  formData.append('bio', bio);
+                  formData.append('removeProfilePicture', 'true');
+                  const res = await updateProfile(formData);
+                  setSubmitting(false);
+                  if (res.success) {
+                    addToast('Profile photo removed', 'success');
+                    setFile(null);
+                    setPreviewUrl(null);
+                  } else {
+                    addToast(res.message || 'Remove failed', 'error');
+                  }
+                }}
+                disabled={submitting}
+                className="btn btn-secondary"
+                style={{ fontSize: '0.8rem', padding: '6px 14px', borderRadius: '20px' }}
+              >
+                Remove Photo
+              </button>
+            )}
+          </div>
           
           <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '2px', textAlign: 'center' }}>{user?.name}</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '6px' }}>@{user?.username || 'N/A'}</p>

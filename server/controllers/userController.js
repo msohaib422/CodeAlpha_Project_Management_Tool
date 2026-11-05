@@ -3,6 +3,7 @@ const Project = require('../models/Project');
 const Task = require('../models/Task');
 const Notification = require('../models/Notification');
 const { sendApproval, sendRejection, sendAdminCreatedUser } = require('../utils/emailService');
+const { uploadProfileImage, deleteProfileImage } = require('../utils/cloudinary');
 
 
 // @desc    Get user profile
@@ -34,25 +35,53 @@ const updateUserProfile = async (req, res) => {
       user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
 
       if (req.file) {
-        const path = require('path');
-        const ext = path.extname(req.file.originalname).toLowerCase() || '.png';
-        const filename = `${req.user._id}-${Date.now()}${ext}`;
-
-        if (process.env.BLOB_READ_WRITE_TOKEN) {
-          const { put } = require('@vercel/blob');
-          const blob = await put(`profile-pictures/${filename}`, req.file.buffer, {
-            access: 'public',
-            token: process.env.BLOB_READ_WRITE_TOKEN,
-          });
-          user.profilePicture = blob.url;
-        } else {
-          const fs = require('fs');
-          const uploadDir = path.join(__dirname, '..', 'uploads');
-          if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-          fs.writeFileSync(path.join(uploadDir, filename), req.file.buffer);
-          user.profilePicture = `/uploads/${filename}`;
+        // Upload to Cloudinary first. If this fails, the existing picture is untouched.
+        let uploaded;
+        try {
+          uploaded = await uploadProfileImage(req.file.buffer);
+        } catch (uploadError) {
+          return res.status(400).json({ message: uploadError.message || 'Profile image upload failed' });
         }
-      } else if (req.body.profilePicture !== undefined) {
+
+        const previousPublicId = user.profilePicturePublicId;
+        user.profilePicture = uploaded.secure_url;
+        user.profilePicturePublicId = uploaded.public_id;
+
+        try {
+          await user.save();
+        } catch (saveError) {
+          // Roll back the newly uploaded asset so we don't orphan it.
+          try {
+            await deleteProfileImage(uploaded.public_id);
+          } catch (cleanupError) {
+            console.error('[profile] rollback delete failed:', cleanupError.message);
+          }
+          throw saveError;
+        }
+
+        // Only delete the previous asset after the new one is stored successfully.
+        if (previousPublicId && previousPublicId !== uploaded.public_id) {
+          try {
+            await deleteProfileImage(previousPublicId);
+          } catch (deleteError) {
+            console.error('[profile] failed to delete previous image:', deleteError.message);
+          }
+        }
+      } else if (req.body && (req.body.removeProfilePicture === 'true' || req.body.removeProfilePicture === true)) {
+        const previousPublicId = user.profilePicturePublicId;
+        user.profilePicture = '';
+        user.profilePicturePublicId = '';
+
+        await user.save();
+
+        if (previousPublicId) {
+          try {
+            await deleteProfileImage(previousPublicId);
+          } catch (deleteError) {
+            console.error('[profile] failed to delete removed image:', deleteError.message);
+          }
+        }
+      } else if (req.body && req.body.profilePicture !== undefined) {
         user.profilePicture = req.body.profilePicture;
       }
 
@@ -75,6 +104,7 @@ const updateUserProfile = async (req, res) => {
         username: updatedUser.username,
         email: updatedUser.email,
         profilePicture: updatedUser.profilePicture,
+        profilePicturePublicId: updatedUser.profilePicturePublicId,
         bio: updatedUser.bio,
       });
     } else {
@@ -243,6 +273,15 @@ const deleteUser = async (req, res) => {
       return res.status(403).json({ message: 'Cannot delete your own account' });
     }
 
+    // Clean up Cloudinary asset (best-effort) before removing the user.
+    if (userToDelete.profilePicturePublicId) {
+      try {
+        await deleteProfileImage(userToDelete.profilePicturePublicId);
+      } catch (cleanupError) {
+        console.error('[deleteUser] cloudinary cleanup failed:', cleanupError.message);
+      }
+    }
+
     await User.findByIdAndDelete(req.params.id);
 
     // Clean up references (remove from projects)
@@ -399,6 +438,75 @@ const updateUserPassword = async (req, res) => {
   }
 };
 
+// @desc    Update a user's profile image (admin only)
+// @route   PUT /api/users/:id/profile-picture
+// @access  Private/Admin
+const updateUserProfileImage = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (req.file) {
+      let uploaded;
+      try {
+        uploaded = await uploadProfileImage(req.file.buffer);
+      } catch (uploadError) {
+        return res.status(400).json({ message: uploadError.message || 'Profile image upload failed' });
+      }
+
+      const previousPublicId = user.profilePicturePublicId;
+      user.profilePicture = uploaded.secure_url;
+      user.profilePicturePublicId = uploaded.public_id;
+
+      try {
+        await user.save();
+      } catch (saveError) {
+        try {
+          await deleteProfileImage(uploaded.public_id);
+        } catch (cleanupError) {
+          console.error('[admin profile] rollback delete failed:', cleanupError.message);
+        }
+        throw saveError;
+      }
+
+      if (previousPublicId && previousPublicId !== uploaded.public_id) {
+        try {
+          await deleteProfileImage(previousPublicId);
+        } catch (deleteError) {
+          console.error('[admin profile] failed to delete previous image:', deleteError.message);
+        }
+      }
+    } else if (req.body && (req.body.removeProfilePicture === 'true' || req.body.removeProfilePicture === true)) {
+      const previousPublicId = user.profilePicturePublicId;
+      user.profilePicture = '';
+      user.profilePicturePublicId = '';
+
+      await user.save();
+
+      if (previousPublicId) {
+        try {
+          await deleteProfileImage(previousPublicId);
+        } catch (deleteError) {
+          console.error('[admin profile] failed to delete removed image:', deleteError.message);
+        }
+      }
+    } else if (req.body && req.body.profilePicture !== undefined) {
+      user.profilePicture = req.body.profilePicture;
+      await user.save();
+    }
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      profilePicture: user.profilePicture,
+      profilePicturePublicId: user.profilePicturePublicId,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
@@ -411,4 +519,5 @@ module.exports = {
   rejectUser,
   updateUser,
   updateUserPassword,
+  updateUserProfileImage,
 };

@@ -120,14 +120,17 @@ body {
   border-radius: var(--border-radius-sm);
   border: none;
   cursor: pointer;
+  /* Prevent native button styling from filling the button with a default color */
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: transparent;
   color: var(--text-primary);
+  -webkit-text-fill-color: currentColor;
   transition: var(--transition);
   outline: none;
 }
 
-.btn:active {
-  color: var(--text-primary);
-}
+/* Do not override per-variant text colors on active/pressed state */
 
 .btn-primary,
 .btn-primary:hover,
