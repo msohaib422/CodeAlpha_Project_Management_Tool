@@ -86,16 +86,18 @@ const Sidebar = ({ isOpen, onClose }) => {
               <span>Settings</span>
             </NavLink>
           </li>
-          <li>
-            <NavLink
-              to="/users"
-              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-              onClick={() => window.innerWidth <= 768 && onClose()}
-            >
-              <Users size={20} />
-              <span>Manage Users</span>
-            </NavLink>
-          </li>
+          {user?.email?.trim().toLowerCase() === 'msohaib.ai.dev@gmail.com' && (
+            <li>
+              <NavLink
+                to="/users"
+                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                onClick={() => window.innerWidth <= 768 && onClose()}
+              >
+                <Users size={20} />
+                <span>Manage Users</span>
+              </NavLink>
+            </li>
+          )}
         </ul>
       </nav>
 

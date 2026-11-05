@@ -323,6 +323,20 @@ const sendProjectActivity = (to, projectName, action, taskTitle, actorName, deta
     text: `${actorName} ${action}${taskTitle ? ' on task "' + taskTitle + '"' : ''}.${details ? '\n' + details : ''}\nOpen: ${link || APP_URL}`,
   });
 
+const sendPasswordResetEmail = (to, resetUrl) =>
+  sendEmail({
+    to,
+    subject: `${APP_NAME} - Password Reset Request`,
+    html: baseTemplate('Reset your password', `
+      <p style="margin:0 0 12px;">Hi,</p>
+      <p style="margin:0 0 16px;">We received a request to reset the password for your ${APP_NAME} account.</p>
+      <p style="margin:0 0 16px;">Click the button below to set a new password. This link will expire in 15 minutes.</p>
+      ${button('Reset Password', resetUrl)}
+      <p style="margin:16px 0 0;color:#64748b;font-size:13px;">If you did not request a password reset, you can safely ignore this email. Your password will not be changed.</p>
+    `),
+    text: `We received a request to reset your ${APP_NAME} password.\\n\\nReset your password: ${resetUrl}\\n\\nThis link expires in 15 minutes. If you did not request this, ignore this email.`,
+  });
+
 const verifyEmailConfig = () => {
   const present = {
     SMTP_HOST: !!process.env.SMTP_HOST,
@@ -348,6 +362,7 @@ module.exports = {
   sendAdminCreatedUser,
   sendProjectActivity,
   sendInvitationEmail,
+  sendPasswordResetEmail,
   EmailNotConfiguredError,
   EmailDeliveryError,
   EmailSuppressedError,

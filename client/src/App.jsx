@@ -6,6 +6,8 @@ import Navbar from './components/Navbar';
 import ToastContainer from './components/ToastContainer';
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const AcceptInvitation = lazy(() => import('./pages/AcceptInvitation'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Projects = lazy(() => import('./pages/Projects'));
@@ -57,6 +59,8 @@ const App = () => {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/invitations/:id/accept" element={<AcceptInvitation />} />
 
         {/* Protected Router paths */}
@@ -68,7 +72,7 @@ const App = () => {
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/users" element={<UserManagement />} />
+            <Route path="/users" element={user?.email?.trim().toLowerCase() === 'msohaib.ai.dev@gmail.com' ? <UserManagement /> : <Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Route>

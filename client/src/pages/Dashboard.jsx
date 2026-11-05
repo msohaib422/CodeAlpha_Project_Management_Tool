@@ -178,15 +178,17 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Links */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '20px' }}>Quick Actions</h2>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-            Manage users and configure your workspace.
-          </p>
-          <Link to="/users" className="btn btn-primary" style={{ display: 'inline-flex', width: '100%', justifyContent: 'center' }}>
-            Go to User Management
-          </Link>
-        </div>
+        {user?.email?.trim().toLowerCase() === 'msohaib.ai.dev@gmail.com' && (
+          <div className="glass-panel" style={{ padding: '24px' }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '20px' }}>Quick Actions</h2>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+              Manage users and configure your workspace.
+            </p>
+            <Link to="/users" className="btn btn-primary" style={{ display: 'inline-flex', width: '100%', justifyContent: 'center' }}>
+              Go to User Management
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Recently Updated Tasks Table/List */}

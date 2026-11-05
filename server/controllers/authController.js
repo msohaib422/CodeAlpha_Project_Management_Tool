@@ -2,7 +2,8 @@ const User = require('../models/User');
 const Notification = require('../models/Notification');
 const generateToken = require('../utils/generateToken');
 const crypto = require('crypto');
-const { sendOTP } = require('../utils/emailService');
+const { sendOTP, sendPasswordResetEmail } = require('../utils/emailService');
+const PasswordResetToken = require('../models/PasswordResetToken');
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
@@ -379,7 +380,7 @@ const loginUser = async (req, res) => {
         email: user.email,
         profilePicture: user.profilePicture,
         bio: user.bio,
-        token: generateToken(user._id),
+        token: generateToken(user._id, user.tokenVersion || 0),
       });
     } else {
       res.status(401).json({ message: 'Invalid credentials' });
@@ -405,7 +406,7 @@ const refreshToken = async (req, res) => {
       email: user.email,
       profilePicture: user.profilePicture,
       bio: user.bio,
-      token: generateToken(user._id),
+      token: generateToken(user._id, user.tokenVersion || 0),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -436,6 +437,115 @@ const getMe = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const normalizedEmail = String(req.body && req.body.email ? req.body.email : '').trim().toLowerCase();
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
+
+    // Generic response to avoid account enumeration.
+    const genericResponse = { message: 'If an account with that email exists, a password reset link has been sent.' };
+
+    if (!user) {
+      return res.json(genericResponse);
+    }
+
+    // Rate limiting: max 3 reset requests per 15 minutes.
+    const recentCount = await PasswordResetToken.countDocuments({
+      user: user._id,
+      createdAt: { $gte: new Date(Date.now() - 15 * 60 * 1000) },
+    });
+    if (recentCount >= 3) {
+      return res.json(genericResponse);
+    }
+
+    // Invalidate previous outstanding tokens.
+    await PasswordResetToken.updateMany(
+      { user: user._id, used: false },
+      { $set: { used: true, usedAt: new Date() } }
+    );
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    await PasswordResetToken.create({
+      user: user._id,
+      tokenHash,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    });
+
+    const resetUrl = `${(process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim()}/reset-password?token=${rawToken}`;
+    try {
+      await sendPasswordResetEmail(user.email, resetUrl);
+    } catch (emailErr) {
+      console.error('[forgot-password] email delivery failed:', emailErr.message);
+    }
+
+    return res.json(genericResponse);
+  } catch (error) {
+    console.error('[forgot-password]', error.message);
+    return res.status(500).json({ message: 'Failed to process request' });
+  }
+};
+
+const validateResetToken = async (req, res) => {
+  try {
+    const token = String(req.params.token || req.body && req.body.token || '').trim();
+    if (!token) return res.status(400).json({ valid: false, message: 'Token is required' });
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const record = await PasswordResetToken.findOne({ tokenHash, used: false });
+    if (!record || record.expiresAt < new Date()) {
+      return res.status(400).json({ valid: false, message: 'Invalid or expired token' });
+    }
+    return res.json({ valid: true });
+  } catch (error) {
+    return res.status(500).json({ valid: false, message: 'Failed to validate token' });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const token = String(req.body && req.body.token ? req.body.token : '').trim();
+    const password = String(req.body && req.body.password ? req.body.password : '');
+    const confirmPassword = String(req.body && req.body.confirmPassword ? req.body.confirmPassword : '');
+
+    if (!token) return res.status(400).json({ message: 'Token is required' });
+    if (!password || password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    if (password !== confirmPassword) return res.status(400).json({ message: 'Passwords do not match' });
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const record = await PasswordResetToken.findOne({ tokenHash, used: false });
+    if (!record || record.expiresAt < new Date()) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
+
+    const user = await User.findById(record.user);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.password = password;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+
+    // Mark token used and invalidate all other tokens for this user.
+    record.used = true;
+    record.usedAt = new Date();
+    await record.save();
+    await PasswordResetToken.updateMany(
+      { user: user._id, _id: { $ne: record._id }, used: false },
+      { $set: { used: true, usedAt: new Date() } }
+    );
+
+    return res.json({ message: 'Password reset successful. You can now log in.' });
+  } catch (error) {
+    console.error('[reset-password]', error.message);
+    return res.status(500).json({ message: 'Failed to reset password' });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -443,4 +553,7 @@ module.exports = {
   refreshToken,
   verifyOtp,
   resendOtp,
+  forgotPassword,
+  validateResetToken,
+  resetPassword,
 };

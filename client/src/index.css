@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
 /* Disable transitions only while switching themes to avoid flicker */
 .theme-switching,
 .theme-switching * {
@@ -5,7 +7,6 @@
 }
 
 /* Design System & Core Typography */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -119,37 +120,67 @@ body {
   border-radius: var(--border-radius-sm);
   border: none;
   cursor: pointer;
+  color: var(--text-primary);
   transition: var(--transition);
   outline: none;
 }
 
+.btn:active {
+  color: var(--text-primary);
+}
+
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary:focus-visible {
+  color: #ffffff;
+}
 .btn-primary {
   background: var(--primary);
-  color: white;
 }
 .btn-primary:hover {
   background: var(--primary-hover);
   transform: translateY(-1px);
 }
 .btn-primary:active {
+  background: var(--primary-hover);
   transform: translateY(0);
 }
 
+.btn-secondary,
+.btn-secondary:hover,
+.btn-secondary:focus,
+.btn-secondary:active,
+.btn-secondary:focus-visible {
+  color: var(--text-primary);
+}
 .btn-secondary {
   background: var(--bg-tertiary);
-  color: var(--text-primary);
   border: 1px solid var(--card-border);
 }
 .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: var(--text-secondary);
 }
+.btn-secondary:active {
+  background: var(--bg-tertiary);
+}
 
+.btn-danger,
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active,
+.btn-danger:focus-visible {
+  color: #ffffff;
+}
 .btn-danger {
   background: var(--error);
-  color: white;
 }
 .btn-danger:hover {
+  background: #dc2626;
+}
+.btn-danger:active {
   background: #dc2626;
 }
 

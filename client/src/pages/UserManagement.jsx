@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { UserPlus, Trash2, Search, X } from 'lucide-react';
+import { UserPlus, Trash2, Search, X, Edit2, KeyRound } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
 import Skeleton from '../components/Skeleton';
 import API, { SERVER_ORIGIN } from '../services/api';
@@ -25,6 +25,17 @@ const UserManagement = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [search, setSearch] = useState('');
   const [highlightedUserId, setHighlightedUserId] = useState(null);
+
+  // Edit user
+  const [editTarget, setEditTarget] = useState(null);
+  const [editForm, setEditForm] = useState({ name: '', username: '', email: '' });
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  // Change password
+  const [passwordTarget, setPasswordTarget] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     name: '', email: '', username: '', password: '12345678',
@@ -117,6 +128,61 @@ const UserManagement = () => {
 
   const resetForm = () => {
     setForm({ name: '', email: '', username: '', password: '12345678' });
+  };
+
+  const openEditUser = (u) => {
+    setEditTarget(u);
+    setEditForm({ name: u.name || '', username: u.username || '', email: u.email || '' });
+  };
+
+  const handleEditUser = async (e) => {
+    e.preventDefault();
+    if (!editForm.name.trim()) {
+      addToast('Name is required', 'error');
+      return;
+    }
+    setEditSubmitting(true);
+    try {
+      const { data } = await API.put(`/users/${editTarget._id}`, editForm);
+      setUsers((prev) => prev.map((u) => (u._id === editTarget._id ? { ...u, ...data } : u)));
+      addToast('User updated successfully', 'success');
+      setEditTarget(null);
+    } catch (error) {
+      addToast(error.response?.data?.message || 'Failed to update user', 'error');
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  const openChangePassword = (u) => {
+    setPasswordTarget(u);
+    setNewPassword('');
+    setConfirmNewPassword('');
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      addToast('Password must be at least 6 characters', 'error');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      addToast('Passwords do not match', 'error');
+      return;
+    }
+    setPasswordSubmitting(true);
+    try {
+      await API.put(`/users/${passwordTarget._id}/password`, {
+        password: newPassword,
+        confirmPassword: confirmNewPassword,
+      });
+      addToast('Password updated successfully', 'success');
+      setPasswordTarget(null);
+    } catch (error) {
+      addToast(error.response?.data?.message || 'Failed to update password', 'error');
+    } finally {
+      setPasswordSubmitting(false);
+    }
   };
 
   const filteredUsers = users.filter((u) =>
@@ -212,6 +278,12 @@ const UserManagement = () => {
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button className="btn btn-secondary" style={{ padding: '6px 10px', fontSize: '0.75rem' }} onClick={() => openEditUser(u)} title="Edit user">
+                          <Edit2 size={14} />
+                        </button>
+                        <button className="btn btn-secondary" style={{ padding: '6px 10px', fontSize: '0.75rem' }} onClick={() => openChangePassword(u)} title="Change password">
+                          <KeyRound size={14} />
+                        </button>
                         {u.status === 'Pending Approval' && (
                           <>
                             <button className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '0.75rem' }} onClick={() => handleApprove(u)}>Approve</button>
@@ -223,7 +295,6 @@ const UserManagement = () => {
                             <Trash2 size={15} />
                           </button>
                         )}
-                        {isMe && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>}
                       </div>
                     </td>
                   </tr>
@@ -261,6 +332,50 @@ const UserManagement = () => {
             <button type="button" className="btn" onClick={() => { setIsModalOpen(false); resetForm(); }}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={submitting}>
               {submitting ? <span className="spinner spinner-sm" /> : 'Create User'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit User Modal */}
+      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="Edit User">
+        <form onSubmit={handleEditUser} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Full Name *</label>
+            <input type="text" className="form-input" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Username</label>
+            <input type="text" className="form-input" value={editForm.username} onChange={(e) => setEditForm({ ...editForm, username: e.target.value })} />
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Email</label>
+            <input type="email" className="form-input" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '4px' }}>
+            <button type="button" className="btn" onClick={() => setEditTarget(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={editSubmitting}>
+              {editSubmitting ? <span className="spinner spinner-sm" /> : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Change Password Modal */}
+      <Modal isOpen={!!passwordTarget} onClose={() => setPasswordTarget(null)} title={`Change Password for ${passwordTarget?.name || ''}`}>
+        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">New Password</label>
+            <PasswordInput value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Enter new password" />
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Confirm Password</label>
+            <PasswordInput value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Confirm new password" />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '4px' }}>
+            <button type="button" className="btn" onClick={() => setPasswordTarget(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={passwordSubmitting}>
+              {passwordSubmitting ? <span className="spinner spinner-sm" /> : 'Update Password'}
             </button>
           </div>
         </form>

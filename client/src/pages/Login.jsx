@@ -123,6 +123,11 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               disabled={loadingState}
             />
+            <div style={{ textAlign: 'right', marginTop: '8px' }}>
+              <Link to="/forgot-password" style={{ color: 'var(--primary)', fontSize: '0.85rem', textDecoration: 'none' }}>
+                Forgot Password?
+              </Link>
+            </div>
           </div>
 
           <button

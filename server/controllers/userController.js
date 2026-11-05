@@ -323,6 +323,82 @@ const rejectUser = async (req, res) => {
   }
 };
 
+// @desc    Update user details (admin only)
+// @route   PUT /api/users/:id
+// @access  Private/Admin (single authorized email)
+const updateUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const { name, username, email } = req.body;
+
+    if (name !== undefined) {
+      if (!String(name).trim()) return res.status(400).json({ message: 'Name is required' });
+      user.name = String(name).trim();
+    }
+
+    if (username !== undefined) {
+      const normalizedUsername = String(username).trim().toLowerCase();
+      if (normalizedUsername) {
+        const existing = await User.findOne({ username: normalizedUsername, _id: { $ne: user._id } });
+        if (existing) return res.status(400).json({ message: 'Username is already taken' });
+        user.username = normalizedUsername;
+      } else {
+        user.username = undefined;
+      }
+    }
+
+    if (email !== undefined) {
+      const normalizedEmail = String(email).trim().toLowerCase();
+      if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(normalizedEmail)) {
+        return res.status(400).json({ message: 'Please add a valid email' });
+      }
+      const existing = await User.findOne({ email: normalizedEmail, _id: { $ne: user._id } });
+      if (existing) return res.status(400).json({ message: 'Email is already in use' });
+      user.email = normalizedEmail;
+    }
+
+    const updated = await user.save();
+    res.json({
+      _id: updated._id,
+      name: updated.name,
+      username: updated.username,
+      email: updated.email,
+      status: updated.status,
+      isActive: updated.isActive,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Change a user's password (admin only)
+// @route   PUT /api/users/:id/password
+// @access  Private/Admin (single authorized email)
+const updateUserPassword = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('+password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const { password, confirmPassword } = req.body;
+    if (!password || String(password).length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
+    }
+
+    user.password = password;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
@@ -333,4 +409,6 @@ module.exports = {
   deleteUser,
   approveUser,
   rejectUser,
+  updateUser,
+  updateUserPassword,
 };

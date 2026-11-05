@@ -21,10 +21,10 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div
         className="modal-content glass-panel"
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking modal content
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
           <h2 style={{ fontSize: '1.4rem', fontWeight: 600 }}>{title}</h2>
