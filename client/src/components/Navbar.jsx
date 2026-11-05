@@ -28,14 +28,14 @@ const Navbar = ({ onMenuClick }) => {
       </button>
 
       <div className="navbar-left">
-        <Link to="/" className="mobile-brand" style={{ textDecoration: 'none', color: 'var(--primary)', display: 'none', alignItems: 'center', gap: '8px', marginLeft: '-4px' }}>
+        <Link to="/" className="mobile-brand" style={{ textDecoration: 'none', color: 'var(--primary)', display: 'none', alignItems: 'center', gap: '8px', marginLeft: '-12px' }}>
           <FolderKanban size={24} />
           <span style={{ fontWeight: 700, fontSize: '1.2rem' }}>CollabPM</span>
         </Link>
 
       </div>
 
-      <div className="navbar-right">
+      <div className="navbar-right" style={{ gap: '14px' }}>
         {/* Theme Toggle */}
         <button className="nav-icon-btn" onClick={toggleTheme} title="Toggle Theme">
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}

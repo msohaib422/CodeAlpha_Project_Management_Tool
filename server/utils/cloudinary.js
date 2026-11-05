@@ -35,10 +35,8 @@ const uploadProfileImage = (buffer) => {
         folder: 'profile-images',
         resource_type: 'image',
         transformation: [
-          { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+          { width: 400, height: 400, crop: 'fill', gravity: 'face', quality: 'auto', fetch_format: 'auto' },
         ],
-        format: 'auto',
-        quality: 'auto',
       },
       (error, result) => {
         if (error) return reject(error);

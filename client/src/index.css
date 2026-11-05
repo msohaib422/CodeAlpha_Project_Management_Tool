@@ -125,9 +125,14 @@ body {
   appearance: none;
   background-color: transparent;
   color: var(--text-primary);
-  -webkit-text-fill-color: currentColor;
   transition: var(--transition);
   outline: none;
+}
+
+/* Preserve readable text color and prevent browser-default filled background on active/pressed state */
+.btn:active {
+  background-color: transparent;
+  color: var(--text-primary);
 }
 
 /* Do not override per-variant text colors on active/pressed state */
