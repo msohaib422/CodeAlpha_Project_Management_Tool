@@ -14,7 +14,7 @@ const NotificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['task_assigned', 'project_added', 'project_invitation', 'comment_added', 'status_changed'],
+      enum: ['task_assigned', 'project_added', 'project_invitation', 'comment_added', 'status_changed', 'registration_request'],
       required: true,
     },
     project: {
@@ -25,6 +25,11 @@ const NotificationSchema = new mongoose.Schema(
     task: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Task',
+      default: null,
+    },
+    relatedUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       default: null,
     },
     message: {

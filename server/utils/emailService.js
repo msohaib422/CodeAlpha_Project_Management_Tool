@@ -119,13 +119,20 @@ const sendRegistrationConfirmation = (to, name) =>
     text: `Hi ${name},\n\nYour email has been verified. Your registration is now pending admin approval. You will be notified once approved.`,
   });
 
-const sendAdminNewRegistration = (to, name, email) =>
-  sendEmail({
+const sendAdminNewRegistration = (to, name, email, registeredAt, userId) => {
+  const dateStr = registeredAt ? new Date(registeredAt).toLocaleString() : new Date().toLocaleString();
+  const reviewUrl = userId ? `${APP_URL}/users?highlight=${userId}` : `${APP_URL}/users`;
+  return sendEmail({
     to,
     subject: `${APP_NAME} - New Registration Pending Approval`,
-    html: baseTemplate('New registration', `<p style="margin:0 0 8px;color:#475569;">A new user has registered and is pending approval.</p><p style="margin:0 0 8px;color:#475569;"><strong>Name:</strong> ${name}<br/><strong>Email:</strong> ${email}</p><p style="margin:12px 0 0;"><a href="${APP_URL}/users" style="display:inline-block;padding:10px 18px;background:#6366f1;color:#fff;border-radius:8px;text-decoration:none;">Review in User Management</a></p>`),
-    text: `A new user has registered and is pending approval.\nName: ${name}\nEmail: ${email}\nReview: ${APP_URL}/users`,
+    html: baseTemplate('New registration pending approval', `
+      <p style="margin:0 0 8px;color:#475569;">A new user has verified their email and is waiting for approval.</p>
+      <p style="margin:0 0 8px;color:#475569;"><strong>Name:</strong> ${name}<br/><strong>Email:</strong> ${email}<br/><strong>Registration date &amp; time:</strong> ${dateStr}<br/><strong>Status:</strong> Pending Approval</p>
+      <p style="margin:12px 0 0;"><a href="${reviewUrl}" style="display:inline-block;padding:10px 18px;background:#6366f1;color:#fff;border-radius:8px;text-decoration:none;">Open User Management</a></p>
+    `),
+    text: `A new user has verified their email and is waiting for approval.\nName: ${name}\nEmail: ${email}\nRegistration date & time: ${dateStr}\nStatus: Pending Approval\nReview: ${reviewUrl}`,
   });
+};
 
 const sendApproval = (to, name) =>
   sendEmail({

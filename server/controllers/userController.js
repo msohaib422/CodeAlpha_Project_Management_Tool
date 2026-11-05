@@ -264,9 +264,27 @@ const approveUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.status !== 'Pending Approval') {
+      return res.status(400).json({ message: 'Registration already processed' });
+    }
     user.status = 'Approved';
+    user.isActive = true;
     await user.save();
-    sendApproval(user.email, user.name);
+    // Update relevant notifications: mark as read.
+    try {
+      await Notification.updateMany(
+        { type: 'registration_request', relatedUser: user._id, read: false },
+        { $set: { read: true } }
+      );
+    } catch (e) {
+      console.error('[approve] notification update failed:', e.message);
+    }
+    // Email is best-effort and non-blocking.
+    try {
+      sendApproval(user.email, user.name);
+    } catch (e) {
+      console.error('[approve] email failed:', e.message);
+    }
     res.json({ message: 'User approved', user });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -280,9 +298,25 @@ const rejectUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.status !== 'Pending Approval') {
+      return res.status(400).json({ message: 'Registration already processed' });
+    }
     user.status = 'Rejected';
+    user.isActive = false;
     await user.save();
-    sendRejection(user.email, user.name, req.body.reason);
+    try {
+      await Notification.updateMany(
+        { type: 'registration_request', relatedUser: user._id, read: false },
+        { $set: { read: true } }
+      );
+    } catch (e) {
+      console.error('[reject] notification update failed:', e.message);
+    }
+    try {
+      sendRejection(user.email, user.name, req.body && req.body.reason);
+    } catch (e) {
+      console.error('[reject] email failed:', e.message);
+    }
     res.json({ message: 'User rejected', user });
   } catch (error) {
     res.status(500).json({ message: error.message });

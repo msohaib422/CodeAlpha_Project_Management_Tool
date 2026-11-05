@@ -65,7 +65,7 @@ const Navbar = ({ onMenuClick }) => {
         {/* Notifications Icon */}
         <Link to="/notifications" className="nav-icon-btn" title="Notifications">
           <Bell size={20} />
-          {unreadCount > 0 && <span className="badge-count">{unreadCount}</span>}
+          {unreadCount > 0 && <span className="badge-count">{unreadCount > 99 ? '99+' : unreadCount}</span>}
         </Link>
 
         {/* Profile Avatar / Logout Dropdown */}

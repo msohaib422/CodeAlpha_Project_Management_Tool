@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import API from '../services/api';
@@ -11,7 +11,8 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [otp, setOtp] = useState('');
+  const [otpDigits, setOtpDigits] = useState(Array(6).fill(''));
+  const otpRefs = useRef([]);
   const [error, setError] = useState('');
   const [loadingState, setLoadingState] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -28,6 +29,13 @@ const Register = () => {
     const t = setInterval(() => setCooldown((c) => c - 1), 1000);
     return () => clearInterval(t);
   }, [cooldown]);
+
+  useEffect(() => {
+    if (step === 'otp') {
+      setOtpDigits(Array(6).fill(''));
+      setTimeout(() => otpRefs.current[0]?.focus(), 50);
+    }
+  }, [step]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -56,16 +64,60 @@ const Register = () => {
     }
   };
 
+  const handleOtpChange = (index, value) => {
+    if (value && !/^\d$/.test(value)) return;
+    const next = [...otpDigits];
+    next[index] = value;
+    setOtpDigits(next);
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace') {
+      if (otpDigits[index]) {
+        const next = [...otpDigits];
+        next[index] = '';
+        setOtpDigits(next);
+      } else if (index > 0) {
+        const next = [...otpDigits];
+        next[index - 1] = '';
+        setOtpDigits(next);
+        otpRefs.current[index - 1]?.focus();
+      }
+      e.preventDefault();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+    const next = [...otpDigits];
+    for (let i = 0; i < 6; i++) {
+      if (i < pasted.length) next[i] = pasted[i];
+    }
+    setOtpDigits(next);
+    const focusIndex = Math.min(pasted.length, 5);
+    otpRefs.current[focusIndex]?.focus();
+  };
+
   const handleVerify = async (e) => {
     e.preventDefault();
     setError('');
-    if (!otp) { setError('Enter the OTP'); return; }
+    const code = otpDigits.join('');
+    if (code.length !== 6) { setError('Enter the 6-digit code'); return; }
     setLoadingState(true);
     try {
-      await API.post('/auth/verify-otp', { email, otp });
+      await API.post('/auth/verify-otp', { email, otp: code });
       setStep('done');
     } catch (err) {
       setError(err.response?.data?.message || 'Verification failed');
+      setOtpDigits(Array(6).fill(''));
+      otpRefs.current[0]?.focus();
     } finally {
       setLoadingState(false);
     }
@@ -135,7 +187,25 @@ const Register = () => {
             <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>We sent a 6-digit code to {email}.</p>
             <div className="form-group">
               <label className="form-label">OTP Code</label>
-              <input type="text" className="form-input" placeholder="Enter the 6-digit code" value={otp} onChange={(e) => setOtp(e.target.value)} disabled={loadingState} maxLength={6} />
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '8px' }}>
+                {otpDigits.map((d, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => (otpRefs.current[i] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={1}
+                    value={d}
+                    onChange={(e) => handleOtpChange(i, e.target.value.slice(-1))}
+                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                    onPaste={handleOtpPaste}
+                    disabled={loadingState}
+                    className="otp-box"
+                    aria-label={`OTP digit ${i + 1}`}
+                  />
+                ))}
+              </div>
             </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px' }} disabled={loadingState}>
               {loadingState ? <span className="spinner spinner-sm" /> : 'Verify Email'}

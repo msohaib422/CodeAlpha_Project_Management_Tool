@@ -14,6 +14,7 @@ const getNotifications = async (req, res) => {
       .populate('sender', 'name username profilePicture')
       .populate('project', 'name')
       .populate('task', 'title status')
+      .populate('relatedUser', 'name email')
       .sort('-createdAt')
       .skip(skip)
       .limit(limit);

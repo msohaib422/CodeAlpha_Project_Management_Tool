@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const generateToken = require('../utils/generateToken');
 const crypto = require('crypto');
 const { sendOTP } = require('../utils/emailService');
@@ -219,25 +220,47 @@ const verifyOtp = async (req, res) => {
     user.otpAttempts = 0;
     await user.save();
 
-    // Notification emails are best-effort: never fail verification because of email.
+    // In-app notifications for admins (best-effort, non-blocking on failure).
     try {
+      const admins = await User.find({ status: 'Approved' }).select('_id email name');
+      const now = new Date();
+      // Prevent duplicate notifications for the same registration.
+      const existing = await Notification.find({ type: 'registration_request', relatedUser: user._id }).select('recipient');
+      const existingRecipients = new Set(existing.map((n) => n.recipient.toString()));
+      for (const admin of admins) {
+        if (admin._id.toString() === user._id.toString()) continue;
+        if (existingRecipients.has(admin._id.toString())) continue;
+        try {
+          await Notification.create({
+            recipient: admin._id,
+            sender: user._id,
+            type: 'registration_request',
+            relatedUser: user._id,
+            message: `New registration: ${user.name} has verified his email and is waiting for approval.`,
+            read: false,
+          });
+        } catch (e) {
+          console.error('[verify-otp] in-app notification failed:', e.message);
+        }
+      }
+
+      // Notification emails are best-effort: never fail verification because of email.
       const { sendRegistrationConfirmation, sendAdminNewRegistration } = require('../utils/emailService');
       try {
         await sendRegistrationConfirmation(user.email, user.name);
       } catch (e) {
         console.error('[verify-otp] confirmation email failed:', e.message);
       }
-      const admins = await User.find({ status: 'Approved' }).select('email');
       // Cap admin notifications to avoid serverless timeouts; each is independently caught.
       for (const a of admins.slice(0, 10)) {
         try {
-          await sendAdminNewRegistration(a.email, user.name, user.email);
+          await sendAdminNewRegistration(a.email, user.name, user.email, now, user._id);
         } catch (e) {
           console.error('[verify-otp] admin notification failed:', e.message);
         }
       }
     } catch (e) {
-      console.error('[verify-otp] post-verification email block failed:', e.message);
+      console.error('[verify-otp] post-verification notification block failed:', e.message);
     }
 
     res.json({ message: 'Email verified. Your registration is pending admin approval.' });

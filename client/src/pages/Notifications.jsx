@@ -166,6 +166,19 @@ const Notifications = () => {
                             View Project
                           </Link>
                         )}
+                        {notif.type === 'registration_request' && notif.relatedUser && (
+                          <Link
+                            to={`/users?highlight=${notif.relatedUser._id || notif.relatedUser}`}
+                            style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}
+                            onClick={() => {
+                              if (!notif.read) {
+                                markAsRead(notif._id);
+                              }
+                            }}
+                          >
+                            View User
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>

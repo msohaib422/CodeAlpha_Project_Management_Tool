@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { UserPlus, Trash2, Search, X } from 'lucide-react';
 import Skeleton from '../components/Skeleton';
 import API, { SERVER_ORIGIN } from '../services/api';
@@ -14,12 +15,15 @@ const getInitials = (name) => {
 const UserManagement = () => {
   const { user: currentUser } = useContext(AuthContext);
   const { addToast } = useContext(NotificationContext);
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get('highlight');
   const [users, setUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [search, setSearch] = useState('');
+  const [highlightedUserId, setHighlightedUserId] = useState(null);
 
   const [form, setForm] = useState({
     name: '', email: '', username: '', password: '12345678',
@@ -28,6 +32,18 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if (!highlightId || users.length === 0) return;
+    setSearch('');
+    const el = document.getElementById(`user-row-${highlightId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedUserId(highlightId);
+      const timer = setTimeout(() => setHighlightedUserId(null), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightId, users]);
 
   const fetchUsers = async () => {
     try {
@@ -165,7 +181,7 @@ const UserManagement = () => {
               {filteredUsers.map((u) => {
                 const isMe = u._id === currentUser._id;
                 return (
-                  <tr key={u._id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.15s' }}>
+                  <tr key={u._id} id={`user-row-${u._id}`} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.15s', background: highlightedUserId === u._id ? 'rgba(99, 102, 241, 0.12)' : undefined, boxShadow: highlightedUserId === u._id ? 'inset 3px 0 0 var(--primary)' : undefined }}>
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{

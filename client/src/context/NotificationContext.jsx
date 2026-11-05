@@ -59,18 +59,22 @@ export const NotificationProvider = ({ children }) => {
 
   // Mark all notifications as read or individual one
   const handleMarkAsRead = async (notificationId = null) => {
+    // Prevent duplicate count updates: only decrement if the notification was unread.
+    let wasUnread = true;
+    if (notificationId) {
+      const target = notifications.find((n) => n._id === notificationId);
+      if (target) wasUnread = !target.read;
+    }
     try {
       await API.put('/notifications/read', { notificationId });
       if (notificationId) {
         setNotifications((prev) =>
           prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
         );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-        addToast('Notification marked as read', 'success');
+        if (wasUnread) setUnreadCount((prev) => Math.max(0, prev - 1));
       } else {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         setUnreadCount(0);
-        addToast('All notifications marked as read', 'success');
       }
     } catch (error) {
       console.error('Error marking notifications read:', error);

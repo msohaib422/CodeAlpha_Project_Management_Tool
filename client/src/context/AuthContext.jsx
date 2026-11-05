@@ -58,19 +58,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register handler
+  // Register handler (step 1 only: OTP is sent; no session is granted)
   const register = async (name, username, email, password) => {
     try {
-      const { data } = await API.post('/auth/register', { name, username, email, password });
-      localStorage.setItem('token', data.token);
-      setUser({
-        _id: data._id,
-        name: data.name,
-        username: data.username,
-        email: data.email,
-        profilePicture: data.profilePicture,
-        bio: data.bio,
-      });
+      await API.post('/auth/register', { name, username, email, password });
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed';
