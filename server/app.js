@@ -4,9 +4,20 @@ const path = require('path');
 const connectDB = require('./config/db');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 
+// Load env from this file's own directory so config loading does not depend on
+// the process working directory (important for serverless/Vercel cold starts).
+dotenv.config({ path: path.join(__dirname, '.env') });
+// Also fall back to the default cwd-based location for local dev convenience.
 dotenv.config();
 
 const app = express();
+
+try {
+  const { verifyEmailConfig } = require('./utils/emailService');
+  verifyEmailConfig();
+} catch (e) {
+  console.warn('[email] config check failed:', e.message);
+}
 
 // Build the explicit allow-list from CLIENT_URL (comma-separated).
 // In production the frontend and backend share the same Vercel origin, so

@@ -192,6 +192,14 @@ body {
   background: rgba(0, 0, 0, 0.3);
 }
 
+/* Placeholder Text — consistent, readable color in both light and dark themes */
+.form-input::placeholder,
+.search-input::placeholder,
+.filter-select::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
 /* Task Badge Colors */
 .badge {
   display: inline-flex;

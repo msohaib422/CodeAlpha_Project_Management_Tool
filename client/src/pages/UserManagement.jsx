@@ -225,16 +225,16 @@ const UserManagement = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Full Name *</label>
-              <input type="text" className="form-input" placeholder='Enter Name' value={form.name} onChange={(e) => handleFormChange('name', e.target.value)} required />
+              <input type="text" className="form-input" placeholder="Enter full name" value={form.name} onChange={(e) => handleFormChange('name', e.target.value)} required />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Username (optional)</label>
-              <input type="text" className="form-input" value={form.username} onChange={(e) => handleFormChange('username', e.target.value)} placeholder="auto-generated if blank" />
+              <input type="text" className="form-input" value={form.username} onChange={(e) => handleFormChange('username', e.target.value)} placeholder="Leave blank to auto-generate" />
             </div>
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Email *</label>
-            <input type="email" className="form-input" placeholder='Enter Email' value={form.email} onChange={(e) => handleFormChange('email', e.target.value)} required />
+            <input type="email" className="form-input" placeholder="Enter email address" value={form.email} onChange={(e) => handleFormChange('email', e.target.value)} required />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Initial Password</label>

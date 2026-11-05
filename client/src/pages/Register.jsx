@@ -50,7 +50,7 @@ const Register = () => {
       setStep('otp');
       setCooldown(60);
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || 'Unable to reach the server. Please check your connection and try again.');
     } finally {
       setLoadingState(false);
     }
@@ -106,23 +106,23 @@ const Register = () => {
           <form onSubmit={handleRegister}>
             <div className="form-group">
               <label className="form-label">Full Name</label>
-              <input type="text" className="form-input" value={name} onChange={(e) => setName(e.target.value)} disabled={loadingState} />
+              <input type="text" className="form-input" placeholder="Enter your full name" value={name} onChange={(e) => setName(e.target.value)} disabled={loadingState} />
             </div>
             <div className="form-group">
               <label className="form-label">Username (optional)</label>
-              <input type="text" className="form-input" value={username} onChange={(e) => setUsername(e.target.value)} disabled={loadingState} />
+              <input type="text" className="form-input" placeholder="Choose a username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={loadingState} />
             </div>
             <div className="form-group">
               <label className="form-label">Email Address</label>
-              <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loadingState} />
+              <input type="email" className="form-input" placeholder="Enter your email address" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loadingState} />
             </div>
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loadingState} />
+              <input type="password" className="form-input" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loadingState} />
             </div>
             <div className="form-group" style={{ marginBottom: '28px' }}>
               <label className="form-label">Confirm Password</label>
-              <input type="password" className="form-input" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={loadingState} />
+              <input type="password" className="form-input" placeholder="Re-enter your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={loadingState} />
             </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px' }} disabled={loadingState}>
               {loadingState ? <span className="spinner spinner-sm" /> : <><UserPlus size={18} /><span>Create Account</span></>}
@@ -135,7 +135,7 @@ const Register = () => {
             <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>We sent a 6-digit code to {email}.</p>
             <div className="form-group">
               <label className="form-label">OTP Code</label>
-              <input type="text" className="form-input" value={otp} onChange={(e) => setOtp(e.target.value)} disabled={loadingState} maxLength={6} />
+              <input type="text" className="form-input" placeholder="Enter the 6-digit code" value={otp} onChange={(e) => setOtp(e.target.value)} disabled={loadingState} maxLength={6} />
             </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px' }} disabled={loadingState}>
               {loadingState ? <span className="spinner spinner-sm" /> : 'Verify Email'}

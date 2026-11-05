@@ -55,6 +55,20 @@ const UserSchema = new mongoose.Schema(
       type: Date,
       select: false,
     },
+    otpSentAt: {
+      type: Date,
+      select: false,
+    },
+    otpSendCount: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    otpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
     isActive: {
       type: Boolean,
       default: true,
