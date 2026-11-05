@@ -1,26 +1,16 @@
-import React, { useContext, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { NotificationContext } from '../context/NotificationContext';
 import { SERVER_ORIGIN } from '../services/api';
-import { Search, Bell, Sun, Moon, LogOut, User as UserIcon, Menu, FolderKanban } from 'lucide-react';
+import { Bell, Sun, Moon, LogOut, Menu, FolderKanban } from 'lucide-react';
 import './layout.css';
 
 const Navbar = ({ onMenuClick }) => {
   const { user, logout } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const { unreadCount } = useContext(NotificationContext);
-  const [searchVal, setSearchVal] = useState('');
-  const navigate = useNavigate();
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchVal.trim()) {
-      navigate(`/projects?search=${encodeURIComponent(searchVal.trim())}`);
-    }
-  };
-
   const getInitials = (name) => {
     if (!name) return 'U';
     return name
@@ -42,18 +32,7 @@ const Navbar = ({ onMenuClick }) => {
           <FolderKanban size={24} />
           <span style={{ fontWeight: 700, fontSize: '1.2rem' }}>CollabPM</span>
         </Link>
-        <form className="navbar-search-form" onSubmit={handleSearchSubmit} style={{ flex: 1 }}>
-          <div className="search-box">
-            <Search size={18} className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search projects..."
-              className="search-input"
-              value={searchVal}
-              onChange={(e) => setSearchVal(e.target.value)}
-            />
-          </div>
-        </form>
+
       </div>
 
       <div className="navbar-right">

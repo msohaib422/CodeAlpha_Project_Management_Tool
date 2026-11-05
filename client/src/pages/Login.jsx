@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { FolderKanban, LogIn } from 'lucide-react';
 
@@ -11,13 +11,15 @@ const Login = () => {
 
   const { login, user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/';
 
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate(redirect, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, redirect]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,7 +36,7 @@ const Login = () => {
     setLoadingState(false);
 
     if (res.success) {
-      navigate('/');
+      navigate(redirect, { replace: true });
     } else {
       setError(res.message);
     }

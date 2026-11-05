@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { NotificationContext } from '../context/NotificationContext';
 import { AuthContext } from '../context/AuthContext';
 import { Bell, CheckCircle, Clock, Mail, Check, X } from 'lucide-react';
@@ -19,9 +19,15 @@ const Notifications = () => {
     markAsRead,
   } = useContext(NotificationContext);
 
+  const [searchParams] = useSearchParams();
   const [invitations, setInvitations] = useState([]);
-  const [activeTab, setActiveTab] = useState('notifications');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'notifications');
   const [respondingId, setRespondingId] = useState(null);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchNotifications(1, false);
@@ -177,6 +183,19 @@ const Notifications = () => {
                             }}
                           >
                             View User
+                          </Link>
+                        )}
+                        {notif.type === 'project_invitation' && (
+                          <Link
+                            to="/notifications?tab=invitations"
+                            style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}
+                            onClick={() => {
+                              if (!notif.read) {
+                                markAsRead(notif._id);
+                              }
+                            }}
+                          >
+                            View Invitation
                           </Link>
                         )}
                       </div>

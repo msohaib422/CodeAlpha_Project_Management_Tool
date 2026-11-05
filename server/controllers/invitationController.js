@@ -80,18 +80,18 @@ const inviteUser = async (req, res) => {
       status: 'Pending',
     });
 
-    // Send real-time notification to invitee
-    await sendNotification(req, {
-      recipientId: invitee._id,
-      senderId: req.user._id,
-      type: 'project_invitation',
-      projectId: project._id,
-      message: `${req.user.name} invited you to join project "${project.name}"`,
-    });
-
-    // Send invitation email
-    const inviteLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/notifications`;
-    sendInvitationEmail(invitee.email, req.user.name, project.name, inviteLink);
+    // Send in-app notification and invitation email (independent, run in parallel).
+    const inviteLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/invitations/${invitation._id}/accept`;
+    await Promise.allSettled([
+      sendNotification(req, {
+        recipientId: invitee._id,
+        senderId: req.user._id,
+        type: 'project_invitation',
+        projectId: project._id,
+        message: `${req.user.name} invited you to join project "${project.name}"`,
+      }),
+      Promise.resolve(sendInvitationEmail(invitee.email, req.user.name, project.name, inviteLink)),
+    ]);
 
     const populated = await ProjectInvitation.findById(invitation._id)
       .populate('project', 'name description')

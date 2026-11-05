@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import ToastContainer from './components/ToastContainer';
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const AcceptInvitation = lazy(() => import('./pages/AcceptInvitation'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Projects = lazy(() => import('./pages/Projects'));
 const ProjectDetails = lazy(() => import('./pages/ProjectDetails'));
@@ -56,6 +57,7 @@ const App = () => {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/invitations/:id/accept" element={<AcceptInvitation />} />
 
         {/* Protected Router paths */}
         <Route element={<ProtectedRoute />}>

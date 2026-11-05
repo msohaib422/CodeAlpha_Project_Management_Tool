@@ -28,15 +28,22 @@ const Projects = () => {
 
   // Project search (supports navbar redirect + local input)
   const [projectQuery, setProjectQuery] = useState(searchVal);
+  const [debouncedQuery, setDebouncedQuery] = useState(searchVal);
 
   useEffect(() => {
     setProjectQuery(searchVal);
+    setDebouncedQuery(searchVal);
   }, [searchVal]);
 
-  const fetchProjects = async () => {
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(projectQuery), 300);
+    return () => clearTimeout(t);
+  }, [projectQuery]);
+
+  const fetchProjects = async (query = debouncedQuery) => {
     setLoading(true);
     try {
-      const { data } = await API.get(`/projects?search=${encodeURIComponent(projectQuery)}&archived=${showArchived}`);
+      const { data } = await API.get(`/projects?search=${encodeURIComponent(query)}&archived=${showArchived}`);
       setProjects(data);
     } catch (error) {
       console.error('Error loading projects:', error);
@@ -47,8 +54,9 @@ const Projects = () => {
   };
 
   useEffect(() => {
-    fetchProjects();
-  }, [projectQuery, showArchived]);
+    fetchProjects(debouncedQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery, showArchived]);
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
@@ -156,7 +164,7 @@ const Projects = () => {
       {loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
           {[1,2,3].map((i) => (
-            <div key={i} className="glass-panel" style={{ padding: '24px', minHeight: '220px' }}>
+            <div key={i} className="glass-panel" style={{ padding: '24px', minHeight: '220px', border: 'none' }}>
               <Skeleton width="60%" height="20px" style={{ marginBottom: '12px' }} />
               <Skeleton width="100%" height="14px" style={{ marginBottom: '8px' }} />
               <Skeleton width="80%" height="14px" style={{ marginBottom: '16px' }} />
@@ -180,7 +188,7 @@ const Projects = () => {
               : 0;
 
             return (
-              <div key={project._id} className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '220px' }}>
+              <div key={project._id} className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '220px', border: 'none' }}>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                     <span
@@ -289,7 +297,7 @@ const Projects = () => {
           })}
         </div>
       ) : (
-        <div className="glass-panel" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+        <div className="glass-panel" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', border: 'none' }}>
           <Folder size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
           <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '8px' }}>No Projects Found</h3>
           <p style={{ fontSize: '0.9rem', marginBottom: '20px' }}>
