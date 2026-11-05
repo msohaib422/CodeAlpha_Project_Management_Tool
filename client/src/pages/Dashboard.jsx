@@ -157,7 +157,7 @@ const Dashboard = () => {
             </Link>
           </div>
           {stats?.latestNotifications && stats.latestNotifications.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '260px', overflowY: 'auto' }}>
               {stats.latestNotifications.map((notif) => (
                 <div key={notif._id} style={{ display: 'flex', gap: '12px', padding: '10px', borderRadius: '8px', background: notif.read ? 'transparent' : 'rgba(99, 102, 241, 0.05)', border: notif.read ? 'none' : '1px solid rgba(99, 102, 241, 0.15)' }}>
                   <Bell size={16} color="var(--primary)" style={{ marginTop: '3px', flexShrink: 0 }} />
@@ -195,7 +195,7 @@ const Dashboard = () => {
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h2 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '20px' }}>Recently Updated Tasks</h2>
         {stats?.recentlyUpdatedTasks && stats.recentlyUpdatedTasks.length > 0 ? (
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', maxHeight: '320px', overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>

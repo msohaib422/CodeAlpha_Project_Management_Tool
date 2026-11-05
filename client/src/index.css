@@ -293,6 +293,11 @@ body {
   margin-bottom: 30px;
 }
 
+.grid-dashboard .glass-panel {
+  min-height: 100px;
+  height: auto;
+}
+
 @media (max-width: 768px) {
   .grid-dashboard {
     grid-template-columns: repeat(2, minmax(0, 1fr));
