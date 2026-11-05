@@ -16,15 +16,21 @@ const connectDB = async () => {
 };
 
 const seedUsers = async () => {
+  // Safety guard: seed script must never run against production unless explicitly allowed.
+  if (process.env.ALLOW_DESTRUCTIVE_SEED !== 'true') {
+    console.error('[seed] Refusing to run: set ALLOW_DESTRUCTIVE_SEED=true to acknowledge this is a non-production seed operation.');
+    process.exit(1);
+  }
+
   try {
     await connectDB();
-    
-    await User.deleteMany({
-      $or: [
-        { email: { $in: ['admin@example.com', 'user@example.com'] } },
-        { username: { $in: ['admin', 'demouser'] } }
-      ]
-    });
+
+    // Non-destructive: do not delete or overwrite existing users.
+    const existingAdmin = await User.findOne({ username: 'admin' });
+    if (existingAdmin) {
+      console.log('[seed] Admin user already exists; skipping seed.');
+      process.exit(0);
+    }
 
     const adminUser = new User({
       name: 'Admin User',

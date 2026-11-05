@@ -3,6 +3,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import { NotificationContext } from '../context/NotificationContext';
 import API from '../services/api';
 import { Sun, Moon, ShieldAlert, KeyRound, Monitor } from 'lucide-react';
+import PasswordInput from '../components/PasswordInput';
 
 const Settings = () => {
   const { theme, toggleTheme } = useContext(ThemeContext);
@@ -98,9 +99,7 @@ const Settings = () => {
           <form onSubmit={handlePasswordChange}>
             <div className="form-group">
               <label className="form-label">Current Password</label>
-              <input
-                type="password"
-                className="form-input"
+              <PasswordInput
                 placeholder="Enter current password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
@@ -110,9 +109,7 @@ const Settings = () => {
 
             <div className="form-group">
               <label className="form-label">New Password</label>
-              <input
-                type="password"
-                className="form-input"
+              <PasswordInput
                 placeholder="Enter new password (min. 6 chars)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -122,9 +119,7 @@ const Settings = () => {
 
             <div className="form-group" style={{ marginBottom: '24px' }}>
               <label className="form-label">Confirm New Password</label>
-              <input
-                type="password"
-                className="form-input"
+              <PasswordInput
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

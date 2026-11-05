@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { FolderKanban, LogIn } from 'lucide-react';
+import PasswordInput from '../components/PasswordInput';
 
 const Login = () => {
   const [identifier, setIdentifier] = useState('');
@@ -116,9 +117,7 @@ const Login = () => {
 
           <div className="form-group" style={{ marginBottom: '28px' }}>
             <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
+            <PasswordInput
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

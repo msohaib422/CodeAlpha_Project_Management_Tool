@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { UserPlus, Trash2, Search, X } from 'lucide-react';
+import PasswordInput from '../components/PasswordInput';
 import Skeleton from '../components/Skeleton';
 import API, { SERVER_ORIGIN } from '../services/api';
 import Modal from '../components/Modal';
@@ -254,7 +255,7 @@ const UserManagement = () => {
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Initial Password</label>
-            <input type="text" className="form-input" value={form.password} onChange={(e) => handleFormChange('password', e.target.value)} placeholder="Default: 12345678" />
+            <PasswordInput value={form.password} onChange={(e) => handleFormChange('password', e.target.value)} placeholder="Default: 12345678" />
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '4px' }}>
             <button type="button" className="btn" onClick={() => { setIsModalOpen(false); resetForm(); }}>Cancel</button>

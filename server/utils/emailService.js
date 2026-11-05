@@ -1,4 +1,9 @@
 const nodemailer = require('nodemailer');
+const {
+  normalizeEmail,
+  suppressEmail,
+  filterSuppressed,
+} = require('./emailSuppression');
 
 const APP_NAME = 'CollabPM';
 const APP_URL = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim();
@@ -16,6 +21,22 @@ class EmailDeliveryError extends Error {
     super(message || 'Email provider rejected the message.');
     this.name = 'EmailDeliveryError';
     this.code = 'EMAIL_DELIVERY_FAILED';
+  }
+}
+
+class EmailSuppressedError extends Error {
+  constructor(message) {
+    super(message || 'Recipient is permanently suppressed.');
+    this.name = 'EmailSuppressedError';
+    this.code = 'EMAIL_SUPPRESSED';
+  }
+}
+
+class EmailInfrastructureError extends Error {
+  constructor(message) {
+    super(message || 'Email infrastructure failure.');
+    this.name = 'EmailInfrastructureError';
+    this.code = 'EMAIL_INFRASTRUCTURE_FAILED';
   }
 }
 
@@ -86,7 +107,64 @@ const baseTemplate = (title, bodyHtml) => `
 </body>
 </html>`;
 
+const parseRecipients = (to) => {
+  if (Array.isArray(to)) return to.map((item) => String(item).trim()).filter(Boolean);
+  return String(to || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const isInfrastructureFailure = (err) => {
+  if (err instanceof EmailNotConfiguredError) return true;
+  const code = String((err && err.code) || '').toUpperCase();
+  const infraCodes = new Set([
+    'ECONNECTION',
+    'ETIMEDOUT',
+    'ESOCKET',
+    'EDNS',
+    'EAUTH',
+    'EAI_AGAIN',
+    'ENOTFOUND',
+    'EHOSTUNREACH',
+    'ENETUNREACH',
+    'ECONNREFUSED',
+  ]);
+  if (infraCodes.has(code)) return true;
+  const message = String((err && err.message) || '').toLowerCase();
+  if (!err || !err.responseCode) {
+    return true;
+  }
+  return false;
+};
+
 const sendEmail = async ({ to, subject, html, text }) => {
+  const recipients = parseRecipients(to);
+  if (!recipients.length) {
+    throw new EmailDeliveryError('No recipients provided.');
+  }
+
+  const pairs = recipients
+    .map((original) => ({ original, normalized: normalizeEmail(original) }))
+    .filter((pair) => pair.normalized);
+
+  // Centralized suppression check before any provider interaction.
+  const { allowed, suppressed } = await filterSuppressed(pairs.map((pair) => pair.normalized));
+  const allowedSet = new Set(allowed);
+  const toSendPairs = pairs.filter((pair) => allowedSet.has(pair.normalized));
+  const suppressedRecipients = pairs
+    .filter((pair) => !allowedSet.has(pair.normalized))
+    .map((pair) => pair.normalized);
+
+  if (suppressedRecipients.length) {
+    console.warn(`[email] suppressed recipients skipped: ${suppressedRecipients.join(', ')}`);
+  }
+
+  if (!toSendPairs.length) {
+    console.warn(`[email] all recipients suppressed; skipping delivery: ${suppressedRecipients.join(', ')}`);
+    throw new EmailSuppressedError(`All recipients suppressed: ${suppressedRecipients.join(', ')}`);
+  }
+
   const transporter = getTransporter();
   if (!transporter) {
     console.error('[email] skipped — SMTP not configured (SMTP_HOST missing).');
@@ -94,19 +172,42 @@ const sendEmail = async ({ to, subject, html, text }) => {
   }
 
   const from = process.env.SMTP_FROM || `"${APP_NAME}" <no-reply@collabpm.com>`;
+  const sendTo = toSendPairs.map((pair) => pair.original);
+
   try {
     const info = await transporter.sendMail({
       from,
-      to,
+      to: sendTo.length === 1 ? sendTo[0] : sendTo,
       subject,
       html,
       text: text || subject,
     });
-    console.log(`[email] accepted by provider -> to=${to} subject="${subject}" messageId=${info.messageId}`);
+    console.log(`[email] accepted by provider -> to=${sendTo.join(', ')} subject="${subject}" messageId=${info.messageId}`);
     return info;
   } catch (err) {
-    console.error(`[email] delivery failed -> to=${to} subject="${subject}" code=${err.responseCode || ''} message=${err.message}`);
-    throw new EmailDeliveryError();
+    const providerDetail = `${err && err.code ? err.code : ''} ${err && err.responseCode ? err.responseCode : ''} ${err && err.message ? err.message : ''}`.trim();
+    console.error(`[email] delivery failed -> to=${sendTo.join(', ')} subject="${subject}" code=${err && err.responseCode ? err.responseCode : ''} message=${err && err.message ? err.message : ''}`);
+
+    if (isInfrastructureFailure(err)) {
+      console.error(`[email] infrastructure failure (recipients NOT suppressed): ${providerDetail}`);
+      throw new EmailInfrastructureError(err && err.message ? err.message : 'Email infrastructure failure.');
+    }
+
+    // Permanent suppression for recipient-specific failures (including transient recipient failures).
+    for (const pair of toSendPairs) {
+      try {
+        await suppressEmail({
+          email: pair.normalized,
+          reason: err && err.message ? err.message : 'Email delivery failed',
+          category: 'recipient',
+          providerError: providerDetail,
+        });
+      } catch (suppressErr) {
+        console.error(`[email] failed to record suppression for ${pair.normalized}: ${suppressErr.message}`);
+      }
+    }
+
+    throw new EmailDeliveryError(err && err.message ? err.message : 'Email provider rejected the message.');
   }
 };
 
@@ -249,5 +350,7 @@ module.exports = {
   sendInvitationEmail,
   EmailNotConfiguredError,
   EmailDeliveryError,
+  EmailSuppressedError,
+  EmailInfrastructureError,
   verifyEmailConfig,
 };

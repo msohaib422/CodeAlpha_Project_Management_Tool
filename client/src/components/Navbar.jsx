@@ -4,11 +4,11 @@ import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { NotificationContext } from '../context/NotificationContext';
 import { SERVER_ORIGIN } from '../services/api';
-import { Bell, Sun, Moon, LogOut, Menu, FolderKanban } from 'lucide-react';
+import { Bell, Sun, Moon, Menu, FolderKanban } from 'lucide-react';
 import './layout.css';
 
 const Navbar = ({ onMenuClick }) => {
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const { unreadCount } = useContext(NotificationContext);
   const getInitials = (name) => {
@@ -67,9 +67,7 @@ const Navbar = ({ onMenuClick }) => {
             </div>
           </Link>
 
-          <button className="nav-icon-btn nav-logout-desktop" onClick={logout} title="Log Out">
-            <LogOut size={20} color="var(--error)" />
-          </button>
+
         </div>
       </div>
     </nav>

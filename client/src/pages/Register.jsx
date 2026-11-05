@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import API from '../services/api';
 import { FolderKanban, UserPlus } from 'lucide-react';
+import PasswordInput from '../components/PasswordInput';
 
 const Register = () => {
   const [step, setStep] = useState('form'); // form | otp | done
@@ -170,11 +171,11 @@ const Register = () => {
             </div>
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input type="password" className="form-input" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loadingState} />
+              <PasswordInput placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loadingState} />
             </div>
             <div className="form-group" style={{ marginBottom: '28px' }}>
               <label className="form-label">Confirm Password</label>
-              <input type="password" className="form-input" placeholder="Re-enter your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={loadingState} />
+              <PasswordInput placeholder="Re-enter your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={loadingState} />
             </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px' }} disabled={loadingState}>
               {loadingState ? <span className="spinner spinner-sm" /> : <><UserPlus size={18} /><span>Create Account</span></>}

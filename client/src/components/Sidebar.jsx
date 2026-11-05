@@ -121,7 +121,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <span className="user-username">@{user?.username}</span>
           </div>
         </div>
-        <button className="sidebar-logout-btn" onClick={handleLogout} style={{ display: 'none' }}>
+        <button className="sidebar-logout-btn" onClick={handleLogout}>
           <LogOut size={18} />
           <span>Sign Out</span>
         </button>
